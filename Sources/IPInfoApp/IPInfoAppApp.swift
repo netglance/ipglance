@@ -1,4 +1,3 @@
-// Sources/IPInfoApp/IPInfoAppApp.swift
 import SwiftUI
 
 @main
@@ -6,9 +5,20 @@ struct IPInfoAppApp: App {
     @State private var viewModel = IPViewModel()
 
     var body: some Scene {
-        MenuBarExtra(viewModel.statusText) {
+        // Main popover — .window style allows custom UI with dark/light theme
+        MenuBarExtra {
             MenuBarView(viewModel: viewModel)
+        } label: {
+            Text(viewModel.statusText)
+                .monospacedDigit()
         }
-        .menuBarExtraStyle(.menu)
+        .menuBarExtraStyle(.window)
+
+        // Settings window — opened via openWindow(id: "settings")
+        Window("Настройки — IP Info", id: "settings") {
+            SettingsView(viewModel: viewModel)
+        }
+        .windowResizability(.contentSize)
+        .defaultSize(width: 560, height: 540)
     }
 }
