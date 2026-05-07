@@ -19,24 +19,24 @@ public struct IPGeolocationService: Sendable {
         if let http = urlResponse as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
             throw URLError(.badServerResponse)
         }
-        let r = try JSONDecoder().decode(IPAPIResponse.self, from: data)
+        let response = try JSONDecoder().decode(IPAPIResponse.self, from: data)
 
-        let org = r.org ?? ""
-        let spaceIdx = org.firstIndex(of: " ") ?? org.endIndex
-        let asn = String(org[org.startIndex..<spaceIdx])
-        let isp = spaceIdx < org.endIndex ? String(org[org.index(after: spaceIdx)...]) : org
+        let orgTrimmed = (response.org ?? "").trimmingCharacters(in: .whitespaces)
+        let spaceIdx = orgTrimmed.firstIndex(of: " ") ?? orgTrimmed.endIndex
+        let asn = String(orgTrimmed[orgTrimmed.startIndex..<spaceIdx])
+        let isp = spaceIdx < orgTrimmed.endIndex ? String(orgTrimmed[orgTrimmed.index(after: spaceIdx)...]) : orgTrimmed
 
         return CountryInfo(
-            ip: r.ip,
-            countryCode: r.country_code,
-            countryName: r.country_name,
-            city: r.city ?? "",
-            region: r.region ?? "",
+            ip: response.ip,
+            countryCode: response.country_code,
+            countryName: response.country_name,
+            city: response.city ?? "",
+            region: response.region ?? "",
             isp: isp,
             asn: asn,
-            timezone: r.timezone ?? "",
-            latitude: r.latitude ?? 0,
-            longitude: r.longitude ?? 0
+            timezone: response.timezone ?? "",
+            latitude: response.latitude ?? 0,
+            longitude: response.longitude ?? 0
         )
     }
 }
