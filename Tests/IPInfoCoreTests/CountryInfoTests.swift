@@ -26,4 +26,30 @@ final class CountryInfoTests: XCTestCase {
         let info = CountryInfo(ip: "1.1.1.1", countryCode: "gb", countryName: "United Kingdom")
         XCTAssertEqual(info.flagEmoji, "🇬🇧")
     }
+
+    func testNewFieldsDefault() {
+        let info = CountryInfo(ip: "1.1.1.1", countryCode: "AU", countryName: "Australia")
+        XCTAssertEqual(info.city, "")
+        XCTAssertEqual(info.isp, "")
+        XCTAssertEqual(info.asn, "")
+        XCTAssertEqual(info.timezone, "")
+        XCTAssertEqual(info.latitude, 0)
+        XCTAssertEqual(info.longitude, 0)
+    }
+
+    func testNewFieldsExplicit() {
+        let info = CountryInfo(
+            ip: "1.1.1.1", countryCode: "AU", countryName: "Australia",
+            city: "Sydney", region: "NSW", isp: "Cloudflare",
+            asn: "AS13335", timezone: "Australia/Sydney",
+            latitude: -33.86, longitude: 151.21
+        )
+        XCTAssertEqual(info.city, "Sydney")
+        XCTAssertEqual(info.region, "NSW")
+        XCTAssertEqual(info.isp, "Cloudflare")
+        XCTAssertEqual(info.asn, "AS13335")
+        XCTAssertEqual(info.timezone, "Australia/Sydney")
+        XCTAssertEqual(info.latitude, -33.86, accuracy: 0.001)
+        XCTAssertEqual(info.longitude, 151.21, accuracy: 0.001)
+    }
 }
