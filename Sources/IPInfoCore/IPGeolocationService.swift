@@ -15,7 +15,10 @@ public struct IPGeolocationService: Sendable {
     }
 
     public func fetchCountryInfo() async throws -> CountryInfo {
-        let (data, _) = try await session.data(from: apiURL)
+        let (data, urlResponse) = try await session.data(from: apiURL)
+        if let http = urlResponse as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+            throw URLError(.badServerResponse)
+        }
         let response = try JSONDecoder().decode(IPAPIResponse.self, from: data)
         return CountryInfo(
             ip: response.ip,
