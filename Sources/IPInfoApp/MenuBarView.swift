@@ -79,7 +79,7 @@ struct MenuBarView: View {
             )
             StatCell(
                 label: "ASN",
-                value: viewModel.countryInfo?.asn.isEmpty == false ? viewModel.countryInfo!.asn : "—",
+                value: viewModel.countryInfo.map { $0.asn.isEmpty ? "—" : $0.asn } ?? "—",
                 mono: true,
                 isDark: isDark
             )
