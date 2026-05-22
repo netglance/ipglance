@@ -10,7 +10,7 @@ If you believe you've found a security issue in IPGlance — for example, a way 
 
 **Do not open a public GitHub issue for security reports.**
 
-Instead, please use GitHub's [private vulnerability reporting](https://github.com/vladp/ipglance/security/advisories/new) for this repository. If that's unavailable, email the maintainer directly (the address listed on the maintainer's GitHub profile).
+Instead, please use GitHub's [private vulnerability reporting](https://github.com/haric655/ipglance/security/advisories/new) for this repository. If that's unavailable, email the maintainer directly (the address listed on the maintainer's GitHub profile).
 
 When reporting, please include:
 

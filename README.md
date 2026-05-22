@@ -22,13 +22,13 @@ A macOS menu bar utility that shows your current public IP, country, ASN, and ge
 ### Homebrew (recommended)
 
 ```bash
-brew tap vladp/ipglance
+brew tap haric655/ipglance
 brew install --cask ipglance
 ```
 
 ### Download
 
-Grab the latest `.dmg` from the [Releases page](https://github.com/vladp/ipglance/releases/latest).
+Grab the latest `.dmg` from the [Releases page](https://github.com/haric655/ipglance/releases/latest).
 
 Builds are not yet code-signed with a Developer ID, so on first launch you may need to right-click the app and choose **Open** to bypass Gatekeeper, or allow it in **System Settings → Privacy & Security**.
 
@@ -37,7 +37,7 @@ Builds are not yet code-signed with a Developer ID, so on first launch you may n
 Requirements: macOS 14+, Xcode 16+, [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
 
 ```bash
-git clone https://github.com/vladp/ipglance.git
+git clone https://github.com/haric655/ipglance.git
 cd ipglance
 make xcode    # generates IPGlanceApp.xcodeproj
 make run      # builds and launches
@@ -94,7 +94,7 @@ Contributions are welcome. Before opening a PR:
 2. `make build` succeeds (Release configuration).
 3. New user-visible strings are added to `Sources/IPGlanceApp/Resources/Localizable.xcstrings` with at least an English value.
 
-Bug reports and feature requests go in [Issues](https://github.com/vladp/ipglance/issues).
+Bug reports and feature requests go in [Issues](https://github.com/haric655/ipglance/issues).
 
 ## License
 
