@@ -33,5 +33,15 @@
     <string>14.0</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
+    <key>SUFeedURL</key>
+    <string>https://github.com/haric655/ipglance/releases/latest/download/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>Go/iNcRvIdINmyGVn6ixNlI2aBA/Z+uUBProZ1v2gFs=</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
+    <key>SUEnableInstallerLauncherService</key>
+    <false/>
 </dict>
 </plist>
