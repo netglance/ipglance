@@ -1,7 +1,7 @@
 SCHEME    := IPGlanceApp
 BUILD_DIR := build
 APP       := $(BUILD_DIR)/Build/Products/Release/IPGlanceApp.app
-VERSION   := 1.0.0
+VERSION   := $(shell cat VERSION)
 DMG_NAME  := IPGlance-$(VERSION).dmg
 DMG_TMP   := /tmp/dmg-staging
 DMG_ASSETS := /tmp/dmg-assets
