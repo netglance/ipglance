@@ -9,6 +9,9 @@ options:
 packages:
   IPGlanceCore:
     path: .
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.6.0"
 
 settings:
   base:
@@ -33,6 +36,7 @@ targets:
       - SupportingFiles/AppIcon.icns
     dependencies:
       - package: IPGlanceCore
+      - package: Sparkle
       - target: IPGlanceWidget
         embed: true
         codeSign: false
