@@ -82,7 +82,7 @@ RELEASES_DIR := releases
 # One-time: generate the EdDSA keypair. The private key is stored in macOS
 # Keychain (see Sparkle docs). The public key is printed to stdout — paste it
 # into SupportingFiles/IPGlanceApp-Info.plist under SUPublicEDKey.
-release-keys: build
+release-keys:
 	@if [ -z "$(SPARKLE_BIN)" ]; then \
 		echo "❌ Sparkle binaries not found. Run 'make build' first."; exit 1; \
 	fi
@@ -91,7 +91,7 @@ release-keys: build
 # Regenerate releases/appcast.xml from every .dmg in releases/. Sparkle
 # signs each one with the EdDSA private key from Keychain. The .html note
 # next to each dmg (e.g. releases/1.0.1.html) is embedded as release notes.
-appcast: build
+appcast:
 	@if [ -z "$(SPARKLE_BIN)" ]; then \
 		echo "❌ Sparkle binaries not found. Run 'make build' first."; exit 1; \
 	fi
@@ -111,6 +111,7 @@ release: dmg
 	gh release create v$(VERSION) \
 		$(RELEASES_DIR)/IPGlance-$(VERSION).dmg \
 		$(RELEASES_DIR)/appcast.xml \
+		--target $(shell git rev-parse HEAD) \
 		--title "v$(VERSION)" \
 		--notes-file $(RELEASES_DIR)/$(VERSION).html
 	@echo "✅ Released v$(VERSION)"
