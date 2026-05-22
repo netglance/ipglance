@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct AboutView: View {
+    let updater: UpdaterController
+
     @Environment(\.colorScheme) private var colorScheme
 
     private var isDark: Bool { colorScheme == .dark }

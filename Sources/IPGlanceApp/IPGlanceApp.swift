@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct IPGlanceApp: App {
     @State private var viewModel = IPViewModel()
+    @State private var updater = UpdaterController()
 
     var body: some Scene {
         // Main popover — .window style allows custom UI with dark/light theme
@@ -23,7 +24,7 @@ struct IPGlanceApp: App {
 
         // About window — opened via openWindow(id: "about")
         Window(String(localized: "window_about_title", bundle: .module), id: "about") {
-            AboutView()
+            AboutView(updater: updater)
         }
         .windowResizability(.contentSize)
     }
