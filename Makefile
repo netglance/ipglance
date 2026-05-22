@@ -17,7 +17,7 @@ XCODE_FLAGS := \
 	MARKETING_VERSION=$(VERSION) \
 	CURRENT_PROJECT_VERSION=$(VERSION)
 
-.PHONY: build run stop clean test xcode dmg
+.PHONY: build run stop clean test xcode dmg release-keys appcast release
 
 build:
 	xcodebuild $(XCODE_FLAGS) build | grep -E "^(error:|warning:|Build succeeded|FAILED|.*\.swift.*error)"
@@ -70,3 +70,47 @@ dmg: build
 		"$(DMG_TMP)"
 	@rm -rf "$(DMG_TMP)" "$(DMG_ASSETS)"
 	@echo "✅ $(DMG_NAME) ready"
+
+# ─── Sparkle release pipeline ────────────────────────────────────────────
+
+# Path to Sparkle's SPM-checkout binaries. Resolved lazily so it works after
+# the first `make build` has populated build/SourcePackages.
+SPARKLE_BIN = $(shell find $(BUILD_DIR)/SourcePackages -path '*Sparkle*/bin' -type d -print -quit)
+
+RELEASES_DIR := releases
+
+# One-time: generate the EdDSA keypair. The private key is stored in macOS
+# Keychain (see Sparkle docs). The public key is printed to stdout — paste it
+# into SupportingFiles/IPGlanceApp-Info.plist under SUPublicEDKey.
+release-keys: build
+	@if [ -z "$(SPARKLE_BIN)" ]; then \
+		echo "❌ Sparkle binaries not found. Run 'make build' first."; exit 1; \
+	fi
+	"$(SPARKLE_BIN)/generate_keys"
+
+# Regenerate releases/appcast.xml from every .dmg in releases/. Sparkle
+# signs each one with the EdDSA private key from Keychain. The .html note
+# next to each dmg (e.g. releases/1.0.1.html) is embedded as release notes.
+appcast: build
+	@if [ -z "$(SPARKLE_BIN)" ]; then \
+		echo "❌ Sparkle binaries not found. Run 'make build' first."; exit 1; \
+	fi
+	@mkdir -p $(RELEASES_DIR)
+	"$(SPARKLE_BIN)/generate_appcast" $(RELEASES_DIR)
+
+# Cut a release: build DMG, copy it into releases/, regenerate appcast,
+# publish to GitHub Releases. Assumes the current VERSION is the one being
+# released and a matching releases/$(VERSION).html exists.
+release: dmg
+	@if [ ! -f "$(RELEASES_DIR)/$(VERSION).html" ]; then \
+		echo "❌ Missing $(RELEASES_DIR)/$(VERSION).html — write release notes first."; exit 1; \
+	fi
+	@mkdir -p $(RELEASES_DIR)
+	cp $(DMG_NAME) $(RELEASES_DIR)/IPGlance-$(VERSION).dmg
+	@$(MAKE) --no-print-directory appcast
+	gh release create v$(VERSION) \
+		$(RELEASES_DIR)/IPGlance-$(VERSION).dmg \
+		$(RELEASES_DIR)/appcast.xml \
+		--title "v$(VERSION)" \
+		--notes-file $(RELEASES_DIR)/$(VERSION).html
+	@echo "✅ Released v$(VERSION)"
