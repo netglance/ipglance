@@ -13,34 +13,45 @@ import IPGlanceCore
 final class UpdaterController {
     private static let logger = Logger(subsystem: "com.ipglance.app", category: "updater")
 
-    /// Whether Sparkle is initialized and ready to perform checks.
-    private(set) var canCheckForUpdates: Bool = false
+    /// Sparkle error codes (see `Sparkle/SUErrors.h`).
+    private enum SparkleCode {
+        static let domain = "SUSparkleErrorDomain"
+        /// `SUNoUpdateError` — not actually a failure, Sparkle just reports
+        /// "you're already on the latest version" through the error channel
+        /// in some scheduled paths.
+        static let noUpdateError = 1001
+    }
+
+    /// Whether a fresh check can be triggered right now.
+    /// Reflects Sparkle's own readiness — flips to `false` while a check
+    /// is in flight, back to `true` once it completes.
+    var canCheckForUpdates: Bool {
+        controller.updater.canCheckForUpdates
+    }
 
     /// Most recent check outcome, used to drive the About status line.
     private(set) var lastResult: UpdateCheckResult = .idle
 
-    /// Mirror of Sparkle's "last scheduled check" timestamp.
+    /// Last time Sparkle completed an update check, scheduled or manual.
     var lastCheckDate: Date? {
-        UserDefaults.standard.object(forKey: "SULastCheckTime") as? Date
+        controller.updater.lastUpdateCheckDate
     }
 
     /// Bridges the About-view toggle to Sparkle's persisted setting.
     var automaticChecksEnabled: Bool {
-        get { controller?.updater.automaticallyChecksForUpdates ?? false }
-        set { controller?.updater.automaticallyChecksForUpdates = newValue }
+        get { controller.updater.automaticallyChecksForUpdates }
+        set { controller.updater.automaticallyChecksForUpdates = newValue }
     }
 
-    private var controller: SPUStandardUpdaterController?
+    private let controller: SPUStandardUpdaterController
     private let delegate = UpdaterDelegate()
 
     init() {
-        let controller = SPUStandardUpdaterController(
+        self.controller = SPUStandardUpdaterController(
             startingUpdater: true,
             updaterDelegate: delegate,
             userDriverDelegate: nil
         )
-        self.controller = controller
-        self.canCheckForUpdates = true
         delegate.owner = self
         Self.logger.info("Sparkle updater initialized")
     }
@@ -48,7 +59,6 @@ final class UpdaterController {
     /// Triggers a user-initiated check. Sparkle's standard UI takes over
     /// from here (release-notes sheet, progress, install).
     func checkForUpdates() {
-        guard let controller else { return }
         lastResult = .checking
         controller.checkForUpdates(nil)
     }
@@ -67,7 +77,7 @@ final class UpdaterController {
         // Sparkle uses noUpdateError for "you're up to date" instead of the
         // didNotFindUpdate callback in some scheduled paths. Treat it as not
         // a failure.
-        if error.domain == "SUSparkleErrorDomain" && error.code == 1001 {
+        if error.domain == SparkleCode.domain && error.code == SparkleCode.noUpdateError {
             lastResult = .upToDate
             return
         }
