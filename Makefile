@@ -1,37 +1,70 @@
-BINARY_PATH := $(shell swift build -c release --show-bin-path 2>/dev/null)/IPInfoApp
-APP_BUNDLE  := /tmp/IPInfoApp.app
+SCHEME    := IPGlanceApp
+BUILD_DIR := build
+APP       := $(BUILD_DIR)/Build/Products/Release/IPGlanceApp.app
+VERSION   := 1.0.0
+DMG_NAME  := IPGlance-$(VERSION).dmg
+DMG_TMP   := /tmp/dmg-staging
+DMG_ASSETS := /tmp/dmg-assets
 
-.PHONY: build run test clean install uninstall
+XCODE_FLAGS := \
+	-project IPGlanceApp.xcodeproj \
+	-scheme "$(SCHEME)" \
+	-configuration Release \
+	-derivedDataPath $(BUILD_DIR) \
+	CODE_SIGN_IDENTITY="" \
+	CODE_SIGNING_REQUIRED=NO \
+	CODE_SIGNING_ALLOWED=NO
+
+.PHONY: build run stop clean test xcode dmg
 
 build:
-	swift build -c release --target IPInfoApp
+	xcodebuild $(XCODE_FLAGS) build | grep -E "^(error:|warning:|Build succeeded|FAILED|.*\.swift.*error)"
+
+run: build
+	@pkill -9 -x IPGlanceApp 2>/dev/null; sleep 0.5; true
+	@/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+		-f "$(APP)" 2>/dev/null || true
+	@open -n "$(APP)"
+	@echo "✅ IPGlance launched"
+
+stop:
+	@killall IPGlanceApp 2>/dev/null && echo "✅ Stopped" || echo "Not running"
 
 test:
 	swift test
 
-run: build
-	@killall IPInfoApp 2>/dev/null || true
-	@rm -rf "$(APP_BUNDLE)"
-	@mkdir -p "$(APP_BUNDLE)/Contents/MacOS"
-	@cp "$(BINARY_PATH)" "$(APP_BUNDLE)/Contents/MacOS/IPInfoApp"
-	@printf '<?xml version="1.0" encoding="UTF-8"?>\n\
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n\
-<plist version="1.0"><dict>\n\
-  <key>CFBundleIdentifier</key><string>com.ipinfoapp</string>\n\
-  <key>CFBundleName</key><string>IP Info</string>\n\
-  <key>CFBundleExecutable</key><string>IPInfoApp</string>\n\
-  <key>CFBundlePackageType</key><string>APPL</string>\n\
-  <key>LSUIElement</key><true/>\n\
-  <key>NSPrincipalClass</key><string>NSApplication</string>\n\
-</dict></plist>\n' > "$(APP_BUNDLE)/Contents/Info.plist"
-	@open -n "$(APP_BUNDLE)"
-	@echo "✅ IP Info launched"
-
-stop:
-	@killall IPInfoApp 2>/dev/null && echo "✅ Stopped" || echo "Not running"
-
 clean:
+	rm -rf $(BUILD_DIR)
 	swift package clean
 
-install:
-	bash scripts/install-launch-agent.sh
+xcode:
+	xcodegen generate
+	open IPGlanceApp.xcodeproj
+
+dmg: build
+	@echo "🎨 Generating DMG assets…"
+	@bash scripts/icon-from-svg.sh "$(DMG_ASSETS)"
+	@swift scripts/generate-dmg-assets.swift "$(DMG_ASSETS)"
+	@echo "🖼️  Injecting app icon…"
+	@cp "$(DMG_ASSETS)/AppIcon.icns" "$(APP)/Contents/Resources/AppIcon.icns"
+	@swift scripts/set-app-icon.swift "$(DMG_ASSETS)/AppIcon.icns" "$(APP)"
+	@echo "📦 Building $(DMG_NAME)…"
+	@rm -f "$(DMG_NAME)"
+	@rm -rf "$(DMG_TMP)" && mkdir -p "$(DMG_TMP)"
+	@cp -r "$(APP)" "$(DMG_TMP)/IPGlance.app"
+	@cp "$(DMG_ASSETS)/AppIcon.icns" "$(DMG_TMP)/.VolumeIcon.icns" 2>/dev/null || true
+	@create-dmg \
+		--volname "IPGlance" \
+		--volicon "$(DMG_ASSETS)/AppIcon.icns" \
+		--background "$(DMG_ASSETS)/background.png" \
+		--window-pos 200 150 \
+		--window-size 660 400 \
+		--icon-size 120 \
+		--icon "IPGlance.app" 165 185 \
+		--app-drop-link 495 185 \
+		--hide-extension "IPGlance.app" \
+		--no-internet-enable \
+		"$(DMG_NAME)" \
+		"$(DMG_TMP)"
+	@rm -rf "$(DMG_TMP)" "$(DMG_ASSETS)"
+	@echo "✅ $(DMG_NAME) ready"

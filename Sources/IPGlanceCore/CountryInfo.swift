@@ -1,4 +1,4 @@
-public struct CountryInfo: Sendable {
+public struct CountryInfo: Sendable, Codable {
     public let ip: String
     public let countryCode: String
     public let countryName: String

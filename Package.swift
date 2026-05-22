@@ -2,22 +2,21 @@
 import PackageDescription
 
 let package = Package(
-    name: "IPInfoApp",
+    name: "IPGlanceApp",
+    defaultLocalization: "en",
     platforms: [.macOS(.v14)],
+    products: [
+        .library(name: "IPGlanceCore", targets: ["IPGlanceCore"]),
+    ],
     targets: [
         .target(
-            name: "IPInfoCore",
-            path: "Sources/IPInfoCore"
-        ),
-        .executableTarget(
-            name: "IPInfoApp",
-            dependencies: ["IPInfoCore"],
-            path: "Sources/IPInfoApp"
+            name: "IPGlanceCore",
+            path: "Sources/IPGlanceCore"
         ),
         .testTarget(
-            name: "IPInfoCoreTests",
-            dependencies: ["IPInfoCore"],
-            path: "Tests/IPInfoCoreTests"
+            name: "IPGlanceCoreTests",
+            dependencies: ["IPGlanceCore"],
+            path: "Tests/IPGlanceCoreTests"
         )
     ]
 )

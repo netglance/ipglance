@@ -1,5 +1,5 @@
 import SwiftUI
-import IPInfoCore
+import IPGlanceCore
 
 struct MenuBarView: View {
     var viewModel: IPViewModel
@@ -44,7 +44,7 @@ struct MenuBarView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Текущий IP")
+                Text("current_ip", bundle: .module)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(sub)
                     .textCase(.uppercase)
@@ -73,7 +73,7 @@ struct MenuBarView: View {
     private var statsSection: some View {
         HStack(spacing: 0) {
             StatCell(
-                label: "Провайдер",
+                label: "provider",
                 value: viewModel.countryInfo.map { firstWord($0.isp) } ?? "—",
                 isDark: isDark
             )
@@ -84,7 +84,7 @@ struct MenuBarView: View {
                 isDark: isDark
             )
             StatCell(
-                label: "Часовой пояс",
+                label: "timezone",
                 value: viewModel.countryInfo.map { shortTZ($0.timezone) } ?? "—",
                 isDark: isDark
             )
@@ -99,20 +99,27 @@ struct MenuBarView: View {
 
     private var actionsSection: some View {
         VStack(spacing: 0) {
-            ActionRow(icon: "doc.on.doc", label: "Скопировать IP", hint: "⌘C", isDark: isDark) {
+            ActionRow(icon: "doc.on.doc", label: "copy_ip", hint: "⌘C", isDark: isDark) {
                 if let ip = viewModel.countryInfo?.ip {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(ip, forType: .string)
                 }
             }
             ActionRow(
-                icon: "arrow.clockwise", label: "Обновить", hint: "⌘R",
+                icon: "arrow.clockwise", label: "refresh", hint: "⌘R",
                 isDark: isDark, disabled: viewModel.isLoading
             ) {
                 Task { await viewModel.refresh() }
             }
-            ActionRow(icon: "gearshape", label: "Настройки…", hint: "⌘,", isDark: isDark) {
+            ActionRow(icon: "gearshape", label: "settings_ellipsis", hint: "⌘,", isDark: isDark) {
+                // LSUIElement agents don't auto-foreground on openWindow — without this
+                // the window opens behind whatever app is currently active.
+                NSApplication.shared.activate()
                 openWindow(id: "settings")
+            }
+            ActionRow(icon: "info.circle", label: "about", hint: "", isDark: isDark) {
+                NSApplication.shared.activate()
+                openWindow(id: "about")
             }
         }
         .padding(.horizontal, 8)
@@ -123,7 +130,7 @@ struct MenuBarView: View {
 
     private var historySection: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text("Недавно")
+            Text("recently", bundle: .module)
                 .font(.system(size: 10.5, weight: .bold))
                 .foregroundStyle(sub)
                 .textCase(.uppercase)
@@ -161,15 +168,19 @@ struct MenuBarView: View {
                 Circle()
                     .fill(Color(red: 0.19, green: 0.71, blue: 0.42))
                     .frame(width: 6, height: 6)
-                Text("обновлено")
+                Text("updated", bundle: .module)
                     .font(.system(size: 11))
                     .foregroundStyle(sub)
             }
             Spacer()
-            Button("Выйти") { NSApplication.shared.terminate(nil) }
-                .buttonStyle(.plain)
-                .font(.system(size: 11))
-                .foregroundStyle(sub)
+            Button {
+                NSApplication.shared.terminate(nil)
+            } label: {
+                Text("quit", bundle: .module)
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 11))
+            .foregroundStyle(sub)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -191,14 +202,14 @@ struct MenuBarView: View {
 // MARK: - Sub-components
 
 struct StatCell: View {
-    let label: String
+    let label: LocalizedStringKey
     let value: String
     var mono: Bool = false
     let isDark: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(label)
+            Text(label, bundle: .module)
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(isDark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
                 .textCase(.uppercase)
@@ -215,7 +226,7 @@ struct StatCell: View {
 
 struct ActionRow: View {
     let icon: String
-    let label: String
+    let label: LocalizedStringKey
     let hint: String
     let isDark: Bool
     var disabled: Bool = false
@@ -228,7 +239,7 @@ struct ActionRow: View {
                 Image(systemName: icon)
                     .frame(width: 16)
                     .opacity(0.7)
-                Text(label).font(.system(size: 13))
+                Text(label, bundle: .module).font(.system(size: 13))
                 Spacer()
                 Text(hint)
                     .font(.system(size: 11, design: .monospaced))

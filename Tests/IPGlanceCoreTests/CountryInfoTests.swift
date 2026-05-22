@@ -1,5 +1,5 @@
 import XCTest
-@testable import IPInfoCore
+@testable import IPGlanceCore
 
 final class CountryInfoTests: XCTestCase {
     func testFlagEmojiUS() {

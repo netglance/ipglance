@@ -1,5 +1,5 @@
 import XCTest
-@testable import IPInfoCore
+@testable import IPGlanceCore
 
 final class MockHTTPSession: HTTPSession, @unchecked Sendable {
     var mockData: Data = Data()
