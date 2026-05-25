@@ -1,0 +1,78 @@
+name: IPGlanceApp
+options:
+  bundleIdPrefix: com.ipglance
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  generateEmptyDirectories: true
+
+packages:
+  IPGlanceCore:
+    path: .
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.6.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  IPGlanceApp:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/IPGlanceApp
+        excludes:
+          - Resources
+      - path: Sources/IPGlanceApp/Resources
+        type: folder
+    resources:
+      - Sources/IPGlanceApp/Resources
+      - SupportingFiles/AppIcon.icns
+    dependencies:
+      - package: IPGlanceCore
+      - package: Sparkle
+      - target: IPGlanceWidget
+        embed: true
+        codeSign: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ipglance.app
+        PRODUCT_NAME: IPGlanceApp
+        INFOPLIST_FILE: SupportingFiles/IPGlanceApp-Info.plist
+        CODE_SIGN_ENTITLEMENTS: SupportingFiles/IPGlanceApp.entitlements
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks"
+    preBuildScripts:
+      - name: Compile xcstrings
+        script: |
+          BUNDLE="${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}"
+          # xcstrings may be directly in bundle or nested in Resources/ subfolder
+          if [ -f "${BUNDLE}/Localizable.xcstrings" ]; then
+            XCSTRINGS="${BUNDLE}/Localizable.xcstrings"
+          elif [ -f "${BUNDLE}/Resources/Localizable.xcstrings" ]; then
+            XCSTRINGS="${BUNDLE}/Resources/Localizable.xcstrings"
+          fi
+          if [ -n "$XCSTRINGS" ]; then
+            xcrun xcstringstool compile "$XCSTRINGS" --output-directory "$BUNDLE"
+          fi
+
+  IPGlanceWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - Sources/IPGlanceWidget
+    dependencies:
+      - package: IPGlanceCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ipglance.app.widget
+        PRODUCT_NAME: IPGlanceWidget
+        INFOPLIST_FILE: SupportingFiles/IPGlanceWidget-Info.plist
+        CODE_SIGN_ENTITLEMENTS: SupportingFiles/IPGlanceWidget.entitlements
+        LD_RUNPATH_SEARCH_PATHS: "@executable_path/../../../../Frameworks"
+        APPLICATION_EXTENSION_API_ONLY: YES
