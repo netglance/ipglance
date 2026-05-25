@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding agents when working with code in this repository.
 
 ## Project
 
@@ -64,4 +64,4 @@ All AI-tooling output (Superpowers plans/specs, brainstorm scratch, agent state)
 
 ## Commit authorship
 
-**Never add `Co-Authored-By: Claude ...` (or any other AI assistant) trailers to commits.** Do not mention Claude, AI assistants, or codegen tools in commit messages, PR descriptions, or release notes. Commits are authored solely by the human committer.
+**Never add `Co-Authored-By` trailers for AI assistants or codegen tools to commits.** Do not mention AI assistants or codegen tools in commit messages, PR descriptions, or release notes. Commits are authored solely by the human committer.

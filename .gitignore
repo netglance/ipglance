@@ -41,7 +41,6 @@ xcuserdata/
 # ──────────── Tooling state / AI artifacts ────────────
 .ai/
 .superpowers/
-.claude/
 .aider*
 
 # ──────────── Release artifacts ────────────
