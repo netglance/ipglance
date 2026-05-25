@@ -61,3 +61,7 @@ Three Swift modules, all under `Sources/`:
 ## AI artifacts location
 
 All AI-tooling output (Superpowers plans/specs, brainstorm scratch, agent state) goes under `.ai/`, which is gitignored. Use `.ai/superpowers/specs/` and `.ai/superpowers/plans/` instead of the Superpowers defaults of `docs/superpowers/*`. There is intentionally no `docs/` directory in this repo.
+
+## Commit authorship
+
+**Never add `Co-Authored-By: Claude ...` (or any other AI assistant) trailers to commits.** Do not mention Claude, AI assistants, or codegen tools in commit messages, PR descriptions, or release notes. Commits are authored solely by the human committer.
