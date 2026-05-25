@@ -80,7 +80,7 @@ Three Swift modules:
 - **`IPGlanceApp`** — the `.app` target. SwiftUI `MenuBarExtra` and Settings / About windows.
 - **`IPGlanceWidget`** — WidgetKit extension embedded in the app. Reads cached data from the App Group.
 
-The Xcode project is generated from `project.yml` by XcodeGen and is gitignored. See [`AGENTS.md`](AGENTS.md) for the detailed contributor-facing architecture notes.
+The Xcode project is generated from `project.yml` by XcodeGen and is gitignored. See [`CLAUDE.md`](CLAUDE.md) for the detailed contributor-facing architecture notes.
 
 ## Acknowledgments
 
