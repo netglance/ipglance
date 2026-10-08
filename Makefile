@@ -47,6 +47,9 @@ dmg: build
 	@echo "📦 Building $(DMG_NAME)…"
 	@rm -f "$(DMG_NAME)"
 	@rm -rf "$(DMG_TMP)" && mkdir -p "$(DMG_TMP)"
+	# ponytail: ad-hoc signature (no entitlements, as before) so Sparkle's generate_appcast accepts the app; replace with Developer ID signing + notarization when available.
+	@codesign --force --deep --sign - "$(APP)"
+	@codesign --verify --deep --strict "$(APP)"
 	@cp -r "$(APP)" "$(DMG_TMP)/IPGlance.app"
 	@cp SupportingFiles/AppIcon.icns "$(DMG_TMP)/.VolumeIcon.icns" 2>/dev/null || true
 	@create-dmg \
