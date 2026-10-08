@@ -34,8 +34,7 @@ final class IPGeolocationServiceTests: XCTestCase {
         let json = """
         {"ip":"8.8.8.8","country_code":"US","country_name":"United States",
          "city":"Mountain View","region":"California",
-         "org":"AS15169 Google LLC","timezone":"America/Los_Angeles",
-         "latitude":37.386,"longitude":-122.0838}
+         "org":"AS15169 Google LLC","timezone":"America/Los_Angeles"}
         """.data(using: .utf8)!
         let session = MockHTTPSession()
         session.mockData = json
@@ -48,8 +47,6 @@ final class IPGeolocationServiceTests: XCTestCase {
         XCTAssertEqual(info.asn, "AS15169")
         XCTAssertEqual(info.isp, "Google LLC")
         XCTAssertEqual(info.timezone, "America/Los_Angeles")
-        XCTAssertEqual(info.latitude, 37.386, accuracy: 0.001)
-        XCTAssertEqual(info.longitude, -122.0838, accuracy: 0.001)
     }
 
     func testOrgParsingNoSpace() async throws {

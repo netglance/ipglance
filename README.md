@@ -9,7 +9,7 @@ A macOS menu bar utility that shows your current public IP, country, ASN, and ge
 ## Features
 
 - Lives in the menu bar; one-glance read of your public IP and country flag
-- Click for a popover with detailed geo info (city, region, ASN, ISP, timezone, lat/lon)
+- Click for a popover with detailed geo info (city, region, ASN, ISP, timezone)
 - WidgetKit widget in three sizes (Small / Medium / Large)
 - Auto-refreshes on network changes (sleep, Wi-Fi switch, VPN connect)
 - Multi-provider fallback: tries three geolocation services in order so a single outage doesn't blank the menu bar
@@ -53,7 +53,6 @@ make run      # build + relaunch
 make stop     # quit the running app
 make test     # run unit tests via SwiftPM (no Xcode needed)
 make dmg      # produce IPGlance-X.Y.Z.dmg
-make install  # install as a LaunchAgent (auto-start at login)
 ```
 
 To run a single test:

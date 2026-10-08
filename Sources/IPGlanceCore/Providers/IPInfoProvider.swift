@@ -12,7 +12,6 @@ struct IPInfoProvider: IPGeolocationProvider {
         try validateHTTP(resp)
         let r = try JSONDecoder().decode(Response.self, from: data)
         let (asn, isp) = parseOrg(r.org)
-        let (lat, lon) = parseLoc(r.loc)
         let code = r.country ?? ""
         let name = Locale.current.localizedString(forRegionCode: code) ?? code
         return CountryInfo(
@@ -23,9 +22,7 @@ struct IPInfoProvider: IPGeolocationProvider {
             region: r.region ?? "",
             isp: isp,
             asn: asn,
-            timezone: r.timezone ?? "",
-            latitude: lat,
-            longitude: lon
+            timezone: r.timezone ?? ""
         )
     }
 
@@ -35,12 +32,6 @@ struct IPInfoProvider: IPGeolocationProvider {
         let city: String?
         let region: String?
         let org: String?
-        let loc: String?
         let timezone: String?
     }
-}
-
-private func parseLoc(_ loc: String?) -> (Double, Double) {
-    guard let parts = loc?.split(separator: ","), parts.count == 2 else { return (0, 0) }
-    return (Double(parts[0]) ?? 0, Double(parts[1]) ?? 0)
 }

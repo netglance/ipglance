@@ -45,7 +45,7 @@ Three Swift modules, all under `Sources/`:
   - `SharedStore` — UserDefaults wrapper keyed to the App Group `group.com.ipglance.app`, used to hand off cached `CountryInfo` from app to widget.
   - `HTTPSession` protocol — `URLSession` conforms by default; tests pass mocks.
 - **`IPGlanceApp`** — main `.app` target. SwiftUI `MenuBarExtra` (`.window` style) plus two `Window` scenes (`settings`, `about`) opened via `openWindow(id:)`. State lives in `IPViewModel` (`@Observable`); user preferences in `AppSettings`. `BundleModule.swift` exists only because non-SPM builds need a `Bundle.module` shim.
-- **`IPGlanceWidget`** — WidgetKit app extension (`.appex`) embedded inside `IPGlanceApp.app`. Reads from `SharedStore` (re-exported via `@_exported import IPGlanceCore`). Three families: Small / Medium / Large, plus a `WidgetBundle` entry point.
+- **`IPGlanceWidget`** — WidgetKit app extension (`.appex`) embedded inside `IPGlanceApp.app`. Reads `SharedStore` from `IPGlanceCore`. Three families: Small / Medium / Large, plus a `WidgetBundle` entry point.
 
 **Data flow:** `IPViewModel` (app) calls `IPGeolocationService.fetchCountryInfo()` → writes the result through `SharedStore.write(_:)` → `WidgetCenter.shared.reloadAllTimelines()` → `WidgetProvider.getTimeline` reads via `SharedStore.read()`. The App Group `group.com.ipglance.app` is the only IPC channel between the two binaries; both entitlements files in `SupportingFiles/` must list it.
 

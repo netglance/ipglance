@@ -32,11 +32,6 @@ final class UpdaterController {
     /// Most recent check outcome, used to drive the About status line.
     private(set) var lastResult: UpdateCheckResult = .idle
 
-    /// Last time Sparkle completed an update check, scheduled or manual.
-    var lastCheckDate: Date? {
-        controller.updater.lastUpdateCheckDate
-    }
-
     /// Bridges the About-view toggle to Sparkle's persisted setting.
     var automaticChecksEnabled: Bool {
         get { controller.updater.automaticallyChecksForUpdates }
