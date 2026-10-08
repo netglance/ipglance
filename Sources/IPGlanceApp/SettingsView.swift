@@ -66,6 +66,7 @@ private struct KillSwitchTab: View {
     let viewModel: IPViewModel
     @State private var rulesInstalled = KillSwitch.isInstalled
     @State private var pendingRemoval: String?
+    @State private var picking = false
 
     private var currentCode: String? {
         guard let code = viewModel.countryInfo?.countryCode.uppercased(), code.count == 2 else { return nil }
@@ -111,16 +112,13 @@ private struct KillSwitchTab: View {
                 HStack(spacing: 8) {
                     Button { addCountry(currentCode) } label: { Text("killswitch_add_current", bundle: .module) }
                         .disabled(currentCode == nil || settings.allowedCountries.contains(currentCode!))
-                    Menu {
-                        ForEach(Self.allRegions.filter { !settings.allowedCountries.contains($0) }, id: \.self) { code in
-                            Button { addCountry(code) } label: {
-                                Text(verbatim: "\(Self.flag(code)) \(Self.regionName(code))")
+                    Button { picking = true } label: { Text("killswitch_add", bundle: .module) }
+                        .popover(isPresented: $picking, arrowEdge: .bottom) {
+                            CountryPicker(codes: Self.allRegions.filter { !settings.allowedCountries.contains($0) }) {
+                                addCountry($0)
+                                picking = false
                             }
                         }
-                    } label: {
-                        Text("killswitch_add", bundle: .module)
-                    }
-                    .fixedSize()
                 }
             } header: {
                 Text("killswitch_allowed", bundle: .module)
@@ -201,12 +199,67 @@ private struct KillSwitchTab: View {
         .filter { $0.count == 2 && $0.allSatisfy(\.isLetter) && Locale.current.localizedString(forRegionCode: $0) != nil }
         .sorted { regionName($0).localizedCompare(regionName($1)) == .orderedAscending }
 
-    private static func regionName(_ code: String) -> String {
+    fileprivate static func regionName(_ code: String) -> String {
         Locale.current.localizedString(forRegionCode: code) ?? code
     }
 
     // Reuses CountryInfo's regional-indicator math instead of duplicating it.
-    private static func flag(_ code: String) -> String {
+    fileprivate static func flag(_ code: String) -> String {
         CountryInfo(ip: "", countryCode: code, countryName: "").flagEmoji
+    }
+}
+
+private struct CountryPicker: View {
+    let codes: [String]
+    let onPick: (String) -> Void
+    @State private var query = ""
+    @FocusState private var focused: Bool
+
+    private var results: [String] {
+        CountrySearch.filter(codes.map { (code: $0, name: KillSwitchTab.regionName($0)) }, query: query).map(\.code)
+    }
+
+    var body: some View {
+        let results = results
+        let searching = !query.trimmingCharacters(in: .whitespaces).isEmpty
+        VStack(spacing: 0) {
+            TextField(text: $query, prompt: Text("killswitch_search_prompt", bundle: .module)) {
+                Text("killswitch_search_prompt", bundle: .module)
+            }
+            .textFieldStyle(.roundedBorder)
+            .padding(8)
+            .focused($focused)
+            // ponytail: no up/down arrows in the field; typing narrows to 1-3 rows. Upgrade: @State index + onKeyPress.
+            .onSubmit { if searching, let first = results.first { onPick(first) } }
+            Divider()
+            if results.isEmpty {
+                Text("killswitch_search_empty", bundle: .module)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List(results, id: \.self) { code in
+                    Button { onPick(code) } label: {
+                        HStack(spacing: 8) {
+                            Text(verbatim: KillSwitchTab.flag(code)).accessibilityHidden(true)
+                            Text(verbatim: KillSwitchTab.regionName(code))
+                            Spacer()
+                            Text(verbatim: code)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                                .accessibilityHidden(true)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text(verbatim: KillSwitchTab.regionName(code)))
+                    .listRowBackground(searching && code == results.first ? Color.accentColor.opacity(0.15) : Color.clear)
+                }
+            }
+        }
+        .frame(width: 280, height: 320)
+        .onAppear { focused = true }
+        .onChange(of: results.isEmpty) { _, empty in
+            if empty { AccessibilityNotification.Announcement(String(localized: "killswitch_search_empty", bundle: .module)).post() }
+        }
     }
 }
