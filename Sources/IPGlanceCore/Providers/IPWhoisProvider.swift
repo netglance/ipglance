@@ -22,9 +22,7 @@ struct IPWhoisProvider: IPGeolocationProvider {
             region: r.region ?? "",
             isp: isp,
             asn: asn,
-            timezone: r.timezone ?? "",
-            latitude: r.latitude ?? 0,
-            longitude: r.longitude ?? 0
+            timezone: r.timezone ?? ""
         )
     }
 
@@ -39,7 +37,5 @@ struct IPWhoisProvider: IPGeolocationProvider {
         let org: String?
         let isp: String?
         let timezone: String?
-        let latitude: Double?
-        let longitude: Double?
     }
 }

@@ -2,9 +2,9 @@ SCHEME    := IPGlanceApp
 BUILD_DIR := build
 APP       := $(BUILD_DIR)/Build/Products/Release/IPGlanceApp.app
 VERSION   := $(shell cat VERSION)
+REPO_URL  := https://github.com/netglance/ipglance
 DMG_NAME  := IPGlance-$(VERSION).dmg
 DMG_TMP   := /tmp/dmg-staging
-DMG_ASSETS := /tmp/dmg-assets
 
 XCODE_FLAGS := \
 	-project IPGlanceApp.xcodeproj \
@@ -17,7 +17,7 @@ XCODE_FLAGS := \
 	MARKETING_VERSION=$(VERSION) \
 	CURRENT_PROJECT_VERSION=$(VERSION)
 
-.PHONY: build run stop clean test xcode dmg release-keys appcast release
+.PHONY: build run stop clean test xcode dmg release-keys notes appcast release
 
 build:
 	xcodebuild $(XCODE_FLAGS) build | grep -E "^(error:|warning:|Build succeeded|FAILED|.*\.swift.*error)"
@@ -44,21 +44,18 @@ xcode:
 	open IPGlanceApp.xcodeproj
 
 dmg: build
-	@echo "🎨 Generating DMG assets…"
-	@bash scripts/icon-from-svg.sh "$(DMG_ASSETS)"
-	@swift scripts/generate-dmg-assets.swift "$(DMG_ASSETS)"
-	@echo "🖼️  Injecting app icon…"
-	@cp "$(DMG_ASSETS)/AppIcon.icns" "$(APP)/Contents/Resources/AppIcon.icns"
-	@swift scripts/set-app-icon.swift "$(DMG_ASSETS)/AppIcon.icns" "$(APP)"
 	@echo "📦 Building $(DMG_NAME)…"
 	@rm -f "$(DMG_NAME)"
 	@rm -rf "$(DMG_TMP)" && mkdir -p "$(DMG_TMP)"
-	@cp -r "$(APP)" "$(DMG_TMP)/IPGlance.app"
-	@cp "$(DMG_ASSETS)/AppIcon.icns" "$(DMG_TMP)/.VolumeIcon.icns" 2>/dev/null || true
+	# ponytail: ad-hoc signature (no entitlements, as before) so Sparkle's generate_appcast accepts the app; replace with Developer ID signing + notarization when available.
+	@codesign --force --deep --sign - "$(APP)"
+	@codesign --verify --deep --strict "$(APP)"
+	@ditto "$(APP)" "$(DMG_TMP)/IPGlance.app"
+	@cp SupportingFiles/AppIcon.icns "$(DMG_TMP)/.VolumeIcon.icns" 2>/dev/null || true
 	@create-dmg \
 		--volname "IPGlance" \
-		--volicon "$(DMG_ASSETS)/AppIcon.icns" \
-		--background "$(DMG_ASSETS)/background.png" \
+		--volicon SupportingFiles/AppIcon.icns \
+		--background SupportingFiles/dmg-background.png \
 		--window-pos 200 150 \
 		--window-size 660 400 \
 		--icon-size 120 \
@@ -68,16 +65,20 @@ dmg: build
 		--no-internet-enable \
 		"$(DMG_NAME)" \
 		"$(DMG_TMP)"
-	@rm -rf "$(DMG_TMP)" "$(DMG_ASSETS)"
+	@rm -rf "$(DMG_TMP)"
 	@echo "✅ $(DMG_NAME) ready"
 
 # ─── Sparkle release pipeline ────────────────────────────────────────────
 
-# Path to Sparkle's SPM-checkout binaries. Resolved lazily so it works after
-# the first `make build` has populated build/SourcePackages.
-SPARKLE_BIN = $(shell find $(BUILD_DIR)/SourcePackages -path '*Sparkle*/bin' -type d -print -quit)
+# Path to Sparkle's binaries (SPM binary artifact). Resolved lazily so it works
+# after the first `make build` has populated build/SourcePackages.
+SPARKLE_BIN = $(shell dirname "$$(find $(BUILD_DIR)/SourcePackages -name generate_appcast -type f -print -quit 2>/dev/null)" 2>/dev/null | grep -vx '\.')
 
-RELEASES_DIR := releases
+# ponytail: the appcast is regenerated from what is in this dir; `make clean`
+# drops older items, which is fine because Sparkle only needs the newest one.
+# Upgrade: keep the dir outside build/ or download the previous appcast.xml first.
+RELEASES_DIR := $(BUILD_DIR)/release
+NOTES := $(RELEASES_DIR)/IPGlance-$(VERSION).md
 
 # One-time: generate the EdDSA keypair. The private key is stored in macOS
 # Keychain (see Sparkle docs). The public key is printed to stdout — paste it
@@ -88,30 +89,39 @@ release-keys:
 	fi
 	"$(SPARKLE_BIN)/generate_keys"
 
-# Regenerate releases/appcast.xml from every .dmg in releases/. Sparkle
-# signs each one with the EdDSA private key from Keychain. The .html note
-# next to each dmg (e.g. releases/1.0.1.html) is embedded as release notes.
+# Extract the body of the `## [VERSION]` section of CHANGELOG.md into
+# $(NOTES), named like the DMG so generate_appcast picks it up.
+notes:
+	@mkdir -p $(RELEASES_DIR)
+	@awk -v h='## [$(VERSION)]' 'index($$0,h)==1{f=1;next} /^## \[/||/^\[[^]]*\]: /{f=0} f' CHANGELOG.md \
+		| awk 'NF{p=1} p{b[++n]=$$0} NF{l=n} END{for(i=1;i<=l;i++)print b[i]}' > $(NOTES)
+	@if [ ! -s "$(NOTES)" ]; then \
+		echo "❌ CHANGELOG.md has no (or an empty) '## [$(VERSION)]' section — write release notes first."; \
+		rm -f "$(NOTES)"; exit 1; \
+	fi
+
+# Regenerate $(RELEASES_DIR)/appcast.xml from every .dmg in it, signed with the
+# EdDSA private key from the Keychain. Local manual fallback only: CI signs in
+# the isolated `publish` job of release.yml with pinned Sparkle tools.
+# The IPGlance-X.Y.Z.md next to each dmg is embedded as release notes, and
+# enclosure URLs point at this version's GitHub Release assets.
 appcast:
 	@if [ -z "$(SPARKLE_BIN)" ]; then \
 		echo "❌ Sparkle binaries not found. Run 'make build' first."; exit 1; \
 	fi
 	@mkdir -p $(RELEASES_DIR)
-	"$(SPARKLE_BIN)/generate_appcast" $(RELEASES_DIR)
+	"$(SPARKLE_BIN)/generate_appcast" --embed-release-notes \
+		--download-url-prefix $(REPO_URL)/releases/download/v$(VERSION)/ \
+		$(RELEASES_DIR)
 
-# Cut a release: build DMG, copy it into releases/, regenerate appcast,
-# publish to GitHub Releases. Assumes the current VERSION is the one being
-# released and a matching releases/$(VERSION).html exists.
-release: dmg
-	@if [ ! -f "$(RELEASES_DIR)/$(VERSION).html" ]; then \
-		echo "❌ Missing $(RELEASES_DIR)/$(VERSION).html — write release notes first."; exit 1; \
-	fi
-	@mkdir -p $(RELEASES_DIR)
-	cp $(DMG_NAME) $(RELEASES_DIR)/IPGlance-$(VERSION).dmg
-	@$(MAKE) --no-print-directory appcast
-	gh release create v$(VERSION) \
-		$(RELEASES_DIR)/IPGlance-$(VERSION).dmg \
-		$(RELEASES_DIR)/appcast.xml \
-		--target $(shell git rev-parse HEAD) \
-		--title "v$(VERSION)" \
-		--notes-file $(RELEASES_DIR)/$(VERSION).html
-	@echo "✅ Released v$(VERSION)"
+# Maintainer: after bumping VERSION and writing the CHANGELOG.md section, tag
+# and push. The tag (must be on main) triggers the Release workflow, which builds
+# the DMG, then signs and publishes the GitHub Release in a separate job.
+release: notes
+	@git diff --quiet && git diff --cached --quiet || { echo "❌ Working tree is not clean."; exit 1; }
+	@[ "$$(git rev-parse --abbrev-ref HEAD)" = main ] || { echo "❌ Not on main."; exit 1; }
+	@! git rev-parse -q --verify refs/tags/v$(VERSION) >/dev/null || { echo "❌ Tag v$(VERSION) exists locally."; exit 1; }
+	@[ -z "$$(git ls-remote --tags origin refs/tags/v$(VERSION))" ] || { echo "❌ Tag v$(VERSION) exists on origin."; exit 1; }
+	git tag -a v$(VERSION) -m "v$(VERSION)"
+	git push origin v$(VERSION)
+	@echo "✅ Pushed v$(VERSION). Watch: $(REPO_URL)/actions/workflows/release.yml"

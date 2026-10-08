@@ -18,7 +18,7 @@ settings:
     SWIFT_VERSION: "6.0"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
-    MARKETING_VERSION: "1.0.0"
+    MARKETING_VERSION: "1.1.0"
     CURRENT_PROJECT_VERSION: "1"
 
 targets:
@@ -31,9 +31,8 @@ targets:
           - Resources
       - path: Sources/IPGlanceApp/Resources
         type: folder
-    resources:
-      - Sources/IPGlanceApp/Resources
-      - SupportingFiles/AppIcon.icns
+      - path: SupportingFiles/AppIcon.icns
+        buildPhase: resources
     dependencies:
       - package: IPGlanceCore
       - package: Sparkle

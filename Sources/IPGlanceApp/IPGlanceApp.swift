@@ -1,5 +1,16 @@
 import SwiftUI
 
+let buyMeACoffeeURL = URL(string: "https://buymeacoffee.com/vpotar")!
+
+extension Color {
+    /// Shared error/blocked color (contrast-tuned per appearance).
+    static let danger = Color(nsColor: NSColor(name: nil) {
+        $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(red: 1.0, green: 0.50, blue: 0.47, alpha: 1)
+            : NSColor(red: 0.70, green: 0.08, blue: 0.08, alpha: 1)
+    })
+}
+
 @main
 struct IPGlanceApp: App {
     @State private var viewModel = IPViewModel()
@@ -15,17 +26,9 @@ struct IPGlanceApp: App {
         }
         .menuBarExtraStyle(.window)
 
-        // Settings window — opened via openWindow(id: "settings")
-        Window(String(localized: "window_settings_title", bundle: .module), id: "settings") {
-            SettingsView(viewModel: viewModel)
+        // Native tabbed settings window (General / Kill switch / About)
+        Settings {
+            SettingsView(viewModel: viewModel, updater: updater)
         }
-        .windowResizability(.contentSize)
-        .defaultSize(width: 560, height: 540)
-
-        // About window — opened via openWindow(id: "about")
-        Window(String(localized: "window_about_title", bundle: .module), id: "about") {
-            AboutView(updater: updater)
-        }
-        .windowResizability(.contentSize)
     }
 }

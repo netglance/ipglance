@@ -13,6 +13,12 @@ final class AppSettings {
     var showIP: Bool = false {
         didSet { UserDefaults.standard.set(showIP, forKey: "showIP") }
     }
+    var killSwitchEnabled: Bool = false {
+        didSet { UserDefaults.standard.set(killSwitchEnabled, forKey: "killSwitchEnabled") }
+    }
+    var allowedCountries: [String] = [] {
+        didSet { UserDefaults.standard.set(allowedCountries, forKey: "allowedCountries") }
+    }
 
     private var isSyncingAutostart = false
     var autostartEnabled: Bool = false {
@@ -28,12 +34,16 @@ final class AppSettings {
             "showFlag": true,
             "showCountry": true,
             "showIP": false,
+            "killSwitchEnabled": false,
+            "allowedCountries": [String](),
             "autostartEnabled": false,
         ])
         let d = UserDefaults.standard
         showFlag = d.bool(forKey: "showFlag")
         showCountry = d.bool(forKey: "showCountry")
         showIP = d.bool(forKey: "showIP")
+        killSwitchEnabled = d.bool(forKey: "killSwitchEnabled")
+        allowedCountries = d.stringArray(forKey: "allowedCountries") ?? []
 
         // System (Login Items) is the source of truth — the user may have
         // toggled autostart there independently of the in-app switch.

@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import IPGlanceCore
 
 @main
 struct IPGlanceWidgetBundle: WidgetBundle {
@@ -48,9 +49,7 @@ private let previewEntry = IPGlanceEntry(
         region: "North Holland",
         isp: "Cloudflare WARP",
         asn: "AS13335",
-        timezone: "Europe/Amsterdam",
-        latitude: 52.37,
-        longitude: 4.89
+        timezone: "Europe/Amsterdam"
     )
 )
 

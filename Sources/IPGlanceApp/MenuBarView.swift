@@ -3,26 +3,27 @@ import IPGlanceCore
 
 struct MenuBarView: View {
     var viewModel: IPViewModel
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.openWindow) private var openWindow
-
-    private var isDark: Bool { colorScheme == .dark }
-    private var sub: Color { isDark ? .white.opacity(0.55) : .black.opacity(0.5) }
-    private var hairline: Color { isDark ? .white.opacity(0.06) : .black.opacity(0.06) }
-    private var statBg: Color { isDark ? .white.opacity(0.04) : .black.opacity(0.03) }
-    private var stroke: Color { isDark ? .white.opacity(0.08) : .black.opacity(0.07) }
+    @Environment(\.openSettings) private var openSettings
+    @AppStorage("settingsTab") private var settingsTab = "general"
+    @State private var copied = false
+    @State private var historyExpanded = false
+    @State private var statusHovered = false
 
     var body: some View {
         VStack(spacing: 0) {
             heroSection
-            statsSection
-            Divider().opacity(0.3).padding(.horizontal, 8)
-            actionsSection
+            if viewModel.isBlocked || viewModel.killSwitchError != nil {
+                killSwitchSection
+            }
+            if showsStatusRow {
+                statusRow
+            }
+            buttonsRow
             if !viewModel.history.isEmpty {
-                hairline.frame(height: 0.5).padding(.horizontal, 8)
                 historySection
             }
-            hairline.frame(height: 0.5)
+            actionsSection
+            Divider()
             footerSection
         }
         .frame(width: 320)
@@ -34,22 +35,21 @@ struct MenuBarView: View {
         HStack(alignment: .top, spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(isDark ? Color.white.opacity(0.06) : Color.black.opacity(0.04))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14).stroke(stroke, lineWidth: 0.5)
-                    )
+                    .fill(Color.primary.opacity(0.05))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.primary.opacity(0.08), lineWidth: 0.5))
                     .frame(width: 56, height: 56)
                 Text(viewModel.countryInfo?.flagEmoji ?? "🌐")
                     .font(.system(size: 36))
             }
+            .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("current_ip", bundle: .module)
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(sub)
+                    .foregroundStyle(.secondary)
                     .textCase(.uppercase)
                     .tracking(0.4)
-                if viewModel.isLoading {
+                if viewModel.isLoading && viewModel.countryInfo == nil {
                     Text("...").font(.system(size: 18, weight: .semibold, design: .monospaced))
                 } else {
                     Text(viewModel.countryInfo?.ip ?? "—")
@@ -58,86 +58,187 @@ struct MenuBarView: View {
                     if let info = viewModel.countryInfo {
                         Text(info.city.isEmpty ? info.countryName : "\(info.countryName) · \(info.city)")
                             .font(.system(size: 12.5))
-                            .foregroundStyle(sub)
+                            .foregroundStyle(.secondary)
+                        let details = [info.isp, info.asn, shortTZ(info.timezone)]
+                            .filter { !$0.isEmpty && $0 != "—" }
+                            .joined(separator: " · ")
+                        if !details.isEmpty {
+                            Text(verbatim: details)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .help(details)
+                        }
                     }
                 }
             }
             Spacer()
         }
+        .accessibilityElement(children: .combine)
         .padding(18)
         .padding(.bottom, 4)
     }
 
-    // MARK: - Stats
+    // MARK: - Status
 
-    private var statsSection: some View {
-        HStack(spacing: 0) {
-            StatCell(
-                label: "provider",
-                value: viewModel.countryInfo.map { firstWord($0.isp) } ?? "—",
-                isDark: isDark
-            )
-            StatCell(
-                label: "ASN",
-                value: viewModel.countryInfo.map { $0.asn.isEmpty ? "—" : $0.asn } ?? "—",
-                mono: true,
-                isDark: isDark
-            )
-            StatCell(
-                label: "timezone",
-                value: viewModel.countryInfo.map { shortTZ($0.timezone) } ?? "—",
-                isDark: isDark
-            )
+    private var showsStatusLeft: Bool { !(viewModel.isBlocked || viewModel.killSwitchError != nil) }
+    private var showsStatusRow: Bool { showsStatusLeft || viewModel.errorMessage != nil }
+
+    private var statusRow: some View {
+        let ks = viewModel.settings.killSwitchEnabled
+        let paused = ks && viewModel.isKillSwitchPaused
+        let showLeft = showsStatusLeft
+        let failed = viewModel.errorMessage != nil
+        let allowed = viewModel.settings.allowedCountries
+        let flags = allowed.prefix(3).map { CountryInfo(ip: "", countryCode: $0, countryName: "").flagEmoji }.joined()
+        let more = allowed.count > 3 ? " +\(allowed.count - 3)" : ""
+        let key = paused ? "killswitch_paused" : ks ? "killswitch_on" : "killswitch_off"
+        let stateKey = LocalizedStringKey(key)
+        let stateText = String(localized: String.LocalizationValue(key), bundle: .module)
+        var parts: [String] = []
+        if showLeft { parts.append(stateText) }
+        if showLeft && paused { parts.append(String(localized: "killswitch_paused_resume", bundle: .module)) }
+        if failed { parts.append(String(localized: "status_check_failed", bundle: .module)) }
+        return Button {
+            settingsTab = "killswitch"
+            NSApplication.shared.activate()
+            openSettings()
+        } label: {
+            HStack(spacing: 8) {
+                if showLeft {
+                    Label {
+                        Text(stateKey, bundle: .module)
+                    } icon: {
+                        Image(systemName: paused ? "pause.circle" : ks ? "checkmark.shield" : "shield.slash")
+                            .accessibilityHidden(true)
+                    }
+                    .foregroundStyle((ks && !paused) ? .primary : .secondary)
+                    if ks && !allowed.isEmpty {
+                        Text(verbatim: flags + more).accessibilityHidden(true)
+                    }
+                }
+                Spacer()
+                if failed {
+                    Label {
+                        Text("status_check_failed", bundle: .module)
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle").accessibilityHidden(true)
+                    }
+                    .foregroundStyle(.secondary)
+                }
+            }
+            .font(.system(size: 12))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(statusHovered ? Color.primary.opacity(0.07) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 7))
+            .contentShape(Rectangle())
         }
-        .background(statBg)
+        .buttonStyle(.plain)
+        .onHover { statusHovered = $0 }
+        .padding(.horizontal, 8)
+        .help(paused ? String(localized: "killswitch_paused_resume", bundle: .module) : "")
+        .accessibilityLabel(parts.joined(separator: ", "))
+        .accessibilityHint(Text("killswitch_status_hint", bundle: .module))
+    }
+
+    // MARK: - Kill switch
+
+    private var killSwitchSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if viewModel.isBlocked {
+                HStack(spacing: 8) {
+                    Image(systemName: "lock.fill")
+                        .foregroundStyle(Color.danger)
+                        .accessibilityHidden(true)
+                    Text("killswitch_blocked", bundle: .module)
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(Color.danger)
+                        .lineLimit(1)
+                        .layoutPriority(1)
+                    Spacer()
+                    if let info = viewModel.countryInfo {
+                        Text(verbatim: "\(info.flagEmoji) \(info.countryName)")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .accessibilityElement(children: .combine)
+                ActionRow(icon: "lock.open", label: "killswitch_unblock") {
+                    Task { await viewModel.manualUnblock() }
+                }
+            }
+            if let error = viewModel.killSwitchError {
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(Color.danger)
+                        .accessibilityHidden(true)
+                    Text(verbatim: error)
+                        .font(.system(size: 11))
+                        .foregroundStyle(Color.danger)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+            }
+        }
+        .padding(.vertical, 4)
+        .background(Color.danger.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .padding(.horizontal, 14)
         .padding(.bottom, 10)
     }
 
-    // MARK: - Actions
+    // MARK: - Buttons
 
-    private var actionsSection: some View {
-        VStack(spacing: 0) {
-            ActionRow(icon: "doc.on.doc", label: "copy_ip", hint: "⌘C", isDark: isDark) {
-                if let ip = viewModel.countryInfo?.ip {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(ip, forType: .string)
+    private var buttonsRow: some View {
+        HStack(spacing: 8) {
+            Button {
+                guard let ip = viewModel.countryInfo?.ip else { return }
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(ip, forType: .string)
+                copied = true
+                Task {
+                    try? await Task.sleep(for: .seconds(1.5))
+                    copied = false
                 }
+            } label: {
+                Group {
+                if copied {
+                    Label { Text("copied", bundle: .module) } icon: { Image(systemName: "checkmark") }
+                } else {
+                    Label { Text("copy_ip", bundle: .module) } icon: { Image(systemName: "doc.on.doc") }
+                }
+                }
+                .frame(maxWidth: .infinity)
             }
-            ActionRow(
-                icon: "arrow.clockwise", label: "refresh", hint: "⌘R",
-                isDark: isDark, disabled: viewModel.isLoading
-            ) {
+            .keyboardShortcut("c")
+            .disabled(viewModel.countryInfo == nil)
+            .help("⌘C")
+
+            Button {
                 Task { await viewModel.refresh() }
+            } label: {
+                Label { Text("refresh", bundle: .module) } icon: { Image(systemName: "arrow.clockwise") }
+                    .frame(maxWidth: .infinity)
             }
-            ActionRow(icon: "gearshape", label: "settings_ellipsis", hint: "⌘,", isDark: isDark) {
-                // LSUIElement agents don't auto-foreground on openWindow — without this
-                // the window opens behind whatever app is currently active.
-                NSApplication.shared.activate()
-                openWindow(id: "settings")
-            }
-            ActionRow(icon: "info.circle", label: "about", hint: "", isDark: isDark) {
-                NSApplication.shared.activate()
-                openWindow(id: "about")
-            }
+            .keyboardShortcut("r")
+            .disabled(viewModel.isLoading)
+            .help("⌘R")
         }
-        .padding(.horizontal, 8)
+        .buttonStyle(.bordered)
+        .controlSize(.regular)
+        .padding(.horizontal, 14)
         .padding(.vertical, 6)
     }
 
     // MARK: - History
 
     private var historySection: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("recently", bundle: .module)
-                .font(.system(size: 10.5, weight: .bold))
-                .foregroundStyle(sub)
-                .textCase(.uppercase)
-                .tracking(0.5)
-                .padding(.horizontal, 18)
-                .padding(.top, 8)
-
+        DisclosureGroup(isExpanded: $historyExpanded) {
             ForEach(Array(viewModel.history.prefix(3).enumerated()), id: \.offset) { _, h in
                 HStack(spacing: 8) {
                     Text(h.flagEmoji).frame(width: 20)
@@ -146,32 +247,56 @@ struct MenuBarView: View {
                     Spacer()
                     Text(h.countryName)
                         .font(.system(size: 11))
-                        .foregroundStyle(sub)
+                        .foregroundStyle(.secondary)
                 }
                 .font(.system(size: 12))
-                .padding(.horizontal, 18)
-                .padding(.vertical, 3)
+                .padding(.vertical, 2)
+            }
+        } label: {
+            (Text("recently", bundle: .module) + Text(verbatim: " (\(viewModel.history.count))"))
+                .font(.system(size: 12))
+                .contentShape(Rectangle())
+                .onTapGesture { historyExpanded.toggle() }
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 4)
+    }
+
+    // MARK: - Actions
+
+    private var actionsSection: some View {
+        VStack(spacing: 0) {
+            ActionRow(icon: "gearshape", label: "settings_ellipsis") {
+                settingsTab = "general"
+                // LSUIElement agents don't auto-foreground — without this
+                // the window opens behind whatever app is currently active.
+                NSApplication.shared.activate()
+                openSettings()
+            }
+            .keyboardShortcut(",")
+            ActionRow(icon: "info.circle", label: "about") {
+                settingsTab = "about"
+                NSApplication.shared.activate()
+                openSettings()
             }
         }
-        .padding(.bottom, 6)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
     }
 
     // MARK: - Footer
 
     private var footerSection: some View {
         HStack {
-            Text("v 1.0.0")
-                .font(.system(size: 11))
-                .foregroundStyle(sub)
+            Text(verbatim: "v \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?")")
             Spacer()
-            HStack(spacing: 5) {
-                Circle()
-                    .fill(Color(red: 0.19, green: 0.71, blue: 0.42))
-                    .frame(width: 6, height: 6)
-                Text("updated", bundle: .module)
-                    .font(.system(size: 11))
-                    .foregroundStyle(sub)
+            Link(destination: buyMeACoffeeURL) {
+                HStack(spacing: 4) {
+                    Text(verbatim: "☕").accessibilityHidden(true)
+                    Text(verbatim: "Buy Me a Coffee")
+                }
             }
+            .accessibilityLabel(Text(verbatim: "Buy Me a Coffee"))
             Spacer()
             Button {
                 NSApplication.shared.terminate(nil)
@@ -179,18 +304,14 @@ struct MenuBarView: View {
                 Text("quit", bundle: .module)
             }
             .buttonStyle(.plain)
-            .font(.system(size: 11))
-            .foregroundStyle(sub)
         }
+        .font(.system(size: 11))
+        .foregroundStyle(.secondary)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
     }
 
     // MARK: - Helpers
-
-    private func firstWord(_ s: String) -> String {
-        s.split(separator: " ").first.map(String.init) ?? s
-    }
 
     private func shortTZ(_ tz: String) -> String {
         guard !tz.isEmpty else { return "—" }
@@ -201,35 +322,9 @@ struct MenuBarView: View {
 
 // MARK: - Sub-components
 
-struct StatCell: View {
-    let label: LocalizedStringKey
-    let value: String
-    var mono: Bool = false
-    let isDark: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label, bundle: .module)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(isDark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
-                .textCase(.uppercase)
-                .tracking(0.3)
-            Text(value)
-                .font(.system(size: 12.5, weight: .semibold, design: mono ? .monospaced : .default))
-                .lineLimit(1)
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
 struct ActionRow: View {
     let icon: String
     let label: LocalizedStringKey
-    let hint: String
-    let isDark: Bool
-    var disabled: Bool = false
     let action: () -> Void
     @State private var isHovered = false
 
@@ -241,26 +336,14 @@ struct ActionRow: View {
                     .opacity(0.7)
                 Text(label, bundle: .module).font(.system(size: 13))
                 Spacer()
-                Text(hint)
-                    .font(.system(size: 11, design: .monospaced))
-                    .opacity(isDark ? 0.45 : 0.4)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 7)
-            .background(
-                isHovered
-                    ? (isDark ? Color.white.opacity(0.08) : Color.black.opacity(0.05))
-                    : Color.clear
-            )
+            .background(isHovered ? Color.primary.opacity(0.07) : Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 7))
-            .foregroundStyle(
-                disabled
-                    ? (isDark ? Color.white.opacity(0.3) : Color.black.opacity(0.3))
-                    : (isDark ? Color.white.opacity(0.92) : Color.black.opacity(0.85))
-            )
+            .contentShape(RoundedRectangle(cornerRadius: 7))
         }
         .buttonStyle(.plain)
-        .disabled(disabled)
         .onHover { isHovered = $0 }
     }
 }

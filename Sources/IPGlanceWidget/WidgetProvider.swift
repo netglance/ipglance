@@ -11,19 +11,14 @@ struct WidgetProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping @Sendable (Timeline<IPGlanceEntry>) -> Void) {
-        let cached = SharedStore.read()
-        if let cached {
-            let entries = [IPGlanceEntry(date: .now, info: cached)]
-            let next = Calendar.current.date(byAdding: .minute, value: 30, to: .now)!
-            completion(Timeline(entries: entries, policy: .after(next)))
-        } else {
-            Task {
-                let info = try? await IPGeolocationService().fetchCountryInfo()
-                if let info { SharedStore.write(info) }
-                let entries = [IPGlanceEntry(date: .now, info: info)]
-                let next = Calendar.current.date(byAdding: .minute, value: 30, to: .now)!
-                completion(Timeline(entries: entries, policy: .after(next)))
+        Task {
+            var info = SharedStore.read()
+            if info == nil, let fresh = try? await IPGeolocationService().fetchCountryInfo() {
+                SharedStore.write(fresh)
+                info = fresh
             }
+            completion(Timeline(entries: [IPGlanceEntry(date: .now, info: info)],
+                                policy: .after(.now.addingTimeInterval(30 * 60))))
         }
     }
 }

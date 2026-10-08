@@ -2,259 +2,281 @@ import SwiftUI
 import IPGlanceCore
 
 struct SettingsView: View {
-    var viewModel: IPViewModel
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var draft: SettingsDraft = .init()
-
-    private var isDark: Bool { colorScheme == .dark }
-    private var bg: Color { isDark ? Color(red: 31/255, green: 32/255, blue: 36/255) : Color(red: 244/255, green: 245/255, blue: 247/255) }
-    private var panel: Color { isDark ? Color(red: 38/255, green: 40/255, blue: 45/255) : .white }
-    private var sub: Color { isDark ? .white.opacity(0.55) : .black.opacity(0.5) }
-    private var stroke: Color { isDark ? .white.opacity(0.07) : .black.opacity(0.07) }
-    private var footerBg: Color { isDark ? Color(red: 35/255, green: 37/255, blue: 42/255) : Color(red: 238/255, green: 240/255, blue: 243/255) }
+    let viewModel: IPViewModel
+    let updater: UpdaterController
+    @AppStorage("settingsTab") private var tab = "general"
 
     var body: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                bg
-                ScrollView {
-                    generalTab
-                }
-            }
-            footer
-        }
-        .frame(width: 560)
-        .onAppear {
-            viewModel.settings.refreshAutostartFromSystem()
-            draft = SettingsDraft(from: viewModel.settings)
+        TabView(selection: $tab) {
+            GeneralTab(viewModel: viewModel)
+                .tabItem { Label { Text("tab_general", bundle: .module) } icon: { Image(systemName: "gearshape") } }
+                .tag("general")
+            KillSwitchTab(viewModel: viewModel)
+                .tabItem { Label { Text("section_killswitch", bundle: .module) } icon: { Image(systemName: "lock.shield") } }
+                .tag("killswitch")
+            AboutTab(updater: updater)
+                .tabItem { Label { Text("about", bundle: .module) } icon: { Image(systemName: "info.circle") } }
+                .tag("about")
         }
     }
+}
 
-    // MARK: - General tab
+// MARK: - General
 
-    private var generalTab: some View {
-        VStack(alignment: .leading, spacing: 18) {
+private struct GeneralTab: View {
+    let viewModel: IPViewModel
 
-            SettingsSection(title: "section_launch", panel: panel, stroke: stroke, isDark: isDark) {
-                SettingsField(label: "autostart_label", hint: "autostart_hint", isDark: isDark, sub: sub) {
-                    SettingsToggle(isOn: $draft.autostartEnabled, isDark: isDark)
-                }
-                SettingsDivider(isDark: isDark)
-                SettingsField(label: "show_flag", isDark: isDark, sub: sub) {
-                    SettingsToggle(isOn: $draft.showFlag, isDark: isDark)
-                }
-                SettingsDivider(isDark: isDark)
-                SettingsField(label: "show_country", isDark: isDark, sub: sub) {
-                    SettingsToggle(isOn: $draft.showCountry, isDark: isDark)
-                }
-                SettingsDivider(isDark: isDark)
-                SettingsField(label: "show_ip", isDark: isDark, sub: sub) {
-                    SettingsToggle(isOn: $draft.showIP, isDark: isDark)
-                }
-
-                // Live preview
-                HStack(spacing: 10) {
+    var body: some View {
+        @Bindable var settings = viewModel.settings
+        Form {
+            Section {
+                Toggle(isOn: $settings.autostartEnabled) { Text("autostart_label", bundle: .module) }
+            } footer: {
+                Text("autostart_hint", bundle: .module)
+            }
+            Section {
+                Toggle(isOn: $settings.showFlag) { Text("show_flag", bundle: .module) }
+                Toggle(isOn: $settings.showCountry) { Text("show_country", bundle: .module) }
+                Toggle(isOn: $settings.showIP) { Text("show_ip", bundle: .module) }
+                LabeledContent {
+                    Text(viewModel.statusText)
+                        .monospacedDigit()
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
+                } label: {
                     Text("preview", bundle: .module)
-                        .font(.system(size: 10.5, weight: .bold))
-                        .foregroundStyle(sub)
-                        .textCase(.uppercase)
-                        .tracking(0.5)
-                    Spacer()
-                    HStack(spacing: 6) {
-                        if draft.showFlag    { Text(viewModel.countryInfo?.flagEmoji ?? "🌐").font(.system(size: 13)) }
-                        if draft.showCountry { Text(viewModel.countryInfo?.countryCode ?? "??").font(.system(size: 12.5, weight: .semibold)) }
-                        if draft.showIP      { Text(viewModel.countryInfo?.ip ?? "0.0.0.0").font(.system(size: 11.5, design: .monospaced)) }
-                        if !draft.showFlag && !draft.showCountry && !draft.showIP {
-                            Text("empty", bundle: .module).font(.system(size: 11)).opacity(0.5)
+                }
+            } header: {
+                Text("section_menubar", bundle: .module)
+            }
+        }
+        .formStyle(.grouped)
+        .frame(width: 480, height: 300)
+        .onAppear { viewModel.settings.refreshAutostartFromSystem() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            viewModel.settings.refreshAutostartFromSystem()
+        }
+    }
+}
+
+// MARK: - Kill switch
+
+private struct KillSwitchTab: View {
+    let viewModel: IPViewModel
+    @State private var rulesInstalled = KillSwitch.isInstalled
+    @State private var pendingRemoval: String?
+    @State private var picking = false
+
+    private var currentCode: String? {
+        guard let code = viewModel.countryInfo?.countryCode.uppercased(), code.count == 2 else { return nil }
+        return code
+    }
+
+    var body: some View {
+        @Bindable var settings = viewModel.settings
+        Form {
+            Section {
+                Toggle(isOn: Binding(
+                    get: { settings.killSwitchEnabled },
+                    set: { v in Task { await viewModel.setKillSwitch(enabled: v) } }
+                )) {
+                    Text("killswitch_label", bundle: .module)
+                }
+                .disabled(settings.allowedCountries.isEmpty)
+            } footer: {
+                Text("killswitch_hint", bundle: .module)
+            }
+
+            Section {
+                if settings.allowedCountries.isEmpty {
+                    Text("killswitch_empty", bundle: .module)
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(settings.allowedCountries, id: \.self) { code in
+                    let removeLabel = String(format: String(localized: "killswitch_remove_country", bundle: .module), Self.regionName(code))
+                    HStack(spacing: 8) {
+                        Text(verbatim: Self.flag(code)).accessibilityHidden(true)
+                        Text(verbatim: Self.regionName(code))
+                        Text(verbatim: code)
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .accessibilityHidden(true)
+                        Spacer()
+                        Button { requestRemoval(code) } label: { Image(systemName: "minus.circle") }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel(Text(verbatim: removeLabel))
+                            .help(removeLabel)
+                    }
+                }
+                HStack(spacing: 8) {
+                    Button { addCountry(currentCode) } label: { Text("killswitch_add_current", bundle: .module) }
+                        .disabled(currentCode == nil || settings.allowedCountries.contains(currentCode!))
+                    Button { picking = true } label: { Text("killswitch_add", bundle: .module) }
+                        .popover(isPresented: $picking, arrowEdge: .bottom) {
+                            CountryPicker(codes: Self.allRegions.filter { !settings.allowedCountries.contains($0) }) {
+                                addCountry($0)
+                                picking = false
+                            }
+                        }
+                }
+            } header: {
+                Text("killswitch_allowed", bundle: .module)
+            }
+
+            if rulesInstalled || viewModel.killSwitchError != nil {
+                Section {
+                    if rulesInstalled {
+                        Button(role: .destructive) {
+                            Task {
+                                await viewModel.uninstallKillSwitch()
+                                rulesInstalled = KillSwitch.isInstalled
+                            }
+                        } label: {
+                            Text("killswitch_uninstall", bundle: .module)
                         }
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(isDark ? Color.white.opacity(0.10) : Color.black.opacity(0.75))
-                    .foregroundStyle(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(isDark ? Color.white.opacity(0.03) : Color.black.opacity(0.02))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 9)
-                        .stroke(style: StrokeStyle(lineWidth: 0.5, dash: [4]))
-                        .foregroundStyle(stroke)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 9))
-                .padding(.top, 8)
-                .padding(.horizontal, 14)
-                .padding(.bottom, 4)
-            }
-
-        }
-        .padding(26)
-        .padding(.top, 2)
-    }
-
-    // MARK: - Footer
-
-    private var footer: some View {
-        HStack(spacing: 10) {
-            Text("footer_hint", bundle: .module)
-                .font(.system(size: 11))
-                .foregroundStyle(sub)
-            Spacer()
-            Button {
-                draft = SettingsDraft(from: viewModel.settings)
-                dismiss()
-            } label: {
-                Text("cancel", bundle: .module)
-            }
-            .buttonStyle(.plain)
-            .font(.system(size: 13, weight: .medium))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(isDark ? Color.white.opacity(0.18) : Color.black.opacity(0.2), lineWidth: 0.5)
-            )
-            .background(isDark ? Color(red: 58/255, green: 61/255, blue: 68/255) : .white)
-            .foregroundStyle(isDark ? .white : .black)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-
-            Button {
-                draft.apply(to: viewModel.settings)
-                dismiss()
-            } label: {
-                Text("save", bundle: .module)
-            }
-            .buttonStyle(.plain)
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 6)
-            .background(Color.accentColor)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-        }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 12)
-        .background(footerBg)
-        .overlay(Divider().opacity(0.5), alignment: .top)
-    }
-}
-
-// MARK: - Supporting types
-
-enum SettingsTab: CaseIterable, Hashable {
-    case general
-    var label: LocalizedStringKey { "tab_general" }
-    var icon: String { "gearshape" }
-}
-
-struct SettingsDraft {
-    var showFlag: Bool = true
-    var showCountry: Bool = true
-    var showIP: Bool = false
-    var autostartEnabled: Bool = false
-
-    init() {}
-
-    @MainActor
-    init(from s: AppSettings) {
-        showFlag = s.showFlag
-        showCountry = s.showCountry
-        showIP = s.showIP
-        autostartEnabled = s.autostartEnabled
-    }
-
-    @MainActor
-    func apply(to s: AppSettings) {
-        s.showFlag = showFlag
-        s.showCountry = showCountry
-        s.showIP = showIP
-        s.autostartEnabled = autostartEnabled
-    }
-}
-
-// MARK: - Reusable setting components
-
-struct SettingsSection<Content: View>: View {
-    let title: LocalizedStringKey
-    let panel: Color
-    let stroke: Color
-    let isDark: Bool
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title, bundle: .module)
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(isDark ? Color.white.opacity(0.5) : Color.black.opacity(0.5))
-                .textCase(.uppercase)
-                .tracking(0.5)
-            VStack(spacing: 0) {
-                content
-            }
-            .background(panel)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(stroke, lineWidth: 0.5))
-        }
-    }
-}
-
-struct SettingsField<Control: View>: View {
-    let label: LocalizedStringKey
-    var hint: LocalizedStringKey? = nil
-    let isDark: Bool
-    let sub: Color
-    @ViewBuilder let control: Control
-
-    var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label, bundle: .module)
-                    .font(.system(size: 13))
-                    .foregroundStyle(isDark ? Color.white.opacity(0.92) : Color.black.opacity(0.85))
-                if let hint {
-                    Text(hint, bundle: .module)
-                        .font(.system(size: 11))
-                        .foregroundStyle(sub)
+                    if let error = viewModel.killSwitchError {
+                        Text(verbatim: error)
+                            .font(.system(size: 11))
+                            .foregroundStyle(Color.danger)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
-            Spacer()
-            control
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-    }
-}
-
-struct SettingsDivider: View {
-    let isDark: Bool
-    var body: some View {
-        Divider()
-            .foregroundStyle(isDark ? Color.white.opacity(0.06) : Color.black.opacity(0.06))
-            .padding(.horizontal, 14)
-    }
-}
-
-struct SettingsToggle: View {
-    @Binding var isOn: Bool
-    let isDark: Bool
-
-    var body: some View {
-        ZStack(alignment: isOn ? .trailing : .leading) {
-            Capsule()
-                .fill(isOn ? Color.accentColor : (isDark ? Color.white.opacity(0.15) : Color.black.opacity(0.18)))
-                .frame(width: 36, height: 22)
-                .shadow(color: .black.opacity(0.06), radius: 0, x: 0, y: 0)
-            Circle()
-                .fill(Color.white)
-                .frame(width: 19, height: 19)
-                .shadow(color: .black.opacity(0.25), radius: 1, y: 1)
-                .padding(1.5)
+        .formStyle(.grouped)
+        .frame(width: 480, height: 440)
+        .onAppear { rulesInstalled = KillSwitch.isInstalled }
+        .onChange(of: settings.killSwitchEnabled) { rulesInstalled = KillSwitch.isInstalled }
+        .onChange(of: settings.allowedCountries) {
+            Task {
+                if settings.allowedCountries.isEmpty && settings.killSwitchEnabled {
+                    await viewModel.setKillSwitch(enabled: false)
+                } else {
+                    await viewModel.applyKillSwitch()
+                }
+            }
         }
-        .animation(.spring(response: 0.18), value: isOn)
-        .onTapGesture { isOn.toggle() }
+        .confirmationDialog(
+            Text("killswitch_remove_current_title", bundle: .module),
+            isPresented: Binding(get: { pendingRemoval != nil }, set: { if !$0 { pendingRemoval = nil } }),
+            titleVisibility: .visible,
+            presenting: pendingRemoval
+        ) { code in
+            Button(role: .destructive) { remove(code) } label: {
+                Text("killswitch_remove_current_confirm", bundle: .module)
+            }
+            Button(role: .cancel) {} label: { Text("cancel", bundle: .module) }
+        } message: { code in
+            Text(String(format: String(localized: "killswitch_remove_current_message", bundle: .module), Self.regionName(code)))
+        }
+    }
+
+    private func addCountry(_ code: String?) {
+        let settings = viewModel.settings
+        guard let code = code?.uppercased(), code.count == 2, !settings.allowedCountries.contains(code) else { return }
+        settings.allowedCountries.append(code)
+    }
+
+    private func requestRemoval(_ code: String) {
+        let settings = viewModel.settings
+        if KillSwitchRemoval.needsConfirmation(removing: code, current: viewModel.countryInfo?.countryCode,
+                                               allowed: settings.allowedCountries,
+                                               killSwitchEnabled: settings.killSwitchEnabled) {
+            pendingRemoval = code
+        } else {
+            remove(code)
+        }
+    }
+
+    private func remove(_ code: String) {
+        viewModel.settings.allowedCountries.removeAll { $0 == code }
+    }
+
+    private static let allRegions: [String] = Locale.Region.isoRegions
+        .map(\.identifier)
+        .filter { $0.count == 2 && $0.allSatisfy(\.isLetter) && Locale.current.localizedString(forRegionCode: $0) != nil }
+        .sorted { regionName($0).localizedCompare(regionName($1)) == .orderedAscending }
+
+    fileprivate static func regionName(_ code: String) -> String {
+        Locale.current.localizedString(forRegionCode: code) ?? code
+    }
+
+    // Reuses CountryInfo's regional-indicator math instead of duplicating it.
+    fileprivate static func flag(_ code: String) -> String {
+        CountryInfo(ip: "", countryCode: code, countryName: "").flagEmoji
     }
 }
 
+private struct CountryPicker: View {
+    let codes: [String]
+    let onPick: (String) -> Void
+    @State private var query = ""
+    @FocusState private var focused: Bool
+
+    private var results: [String] {
+        CountrySearch.filter(codes.map { (code: $0, name: KillSwitchTab.regionName($0)) }, query: query).map(\.code)
+    }
+
+    var body: some View {
+        let results = results
+        let searching = !query.trimmingCharacters(in: .whitespaces).isEmpty
+        VStack(spacing: 0) {
+            TextField(text: $query, prompt: Text("killswitch_search_prompt", bundle: .module)) {
+                Text("killswitch_search_prompt", bundle: .module)
+            }
+            .textFieldStyle(.plain)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background {
+                let shape = RoundedRectangle(cornerRadius: 10, style: .continuous)
+                shape.fill(.quaternary.opacity(0.5))
+                    .overlay(shape.strokeBorder(focused ? Color.accentColor.opacity(0.5) : Color.primary.opacity(0.1),
+                                                lineWidth: focused ? 1.5 : 0.5))
+            }
+            .focused($focused)
+            .focusEffectDisabled()
+            .padding(10)
+            // ponytail: no up/down arrows in the field; typing narrows to 1-3 rows. Upgrade: @State index + onKeyPress.
+            .onSubmit { if searching, let first = results.first { onPick(first) } }
+            if results.isEmpty {
+                Text("killswitch_search_empty", bundle: .module)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List(results, id: \.self) { code in
+                    Button { onPick(code) } label: {
+                        HStack(spacing: 8) {
+                            Text(verbatim: KillSwitchTab.flag(code)).accessibilityHidden(true)
+                            Text(verbatim: KillSwitchTab.regionName(code))
+                            Spacer()
+                            Text(verbatim: code)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                                .accessibilityHidden(true)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text(verbatim: KillSwitchTab.regionName(code)))
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 2, leading: 10, bottom: 2, trailing: 10))
+                    .listRowBackground(
+                        searching && code == results.first
+                            ? RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color.accentColor.opacity(0.15)).padding(.horizontal, 6)
+                            : nil
+                    )
+                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+            }
+        }
+        .frame(width: 280, height: 320)
+        .onAppear { focused = true }
+        .onChange(of: results.isEmpty) { _, empty in
+            if empty { AccessibilityNotification.Announcement(String(localized: "killswitch_search_empty", bundle: .module)).post() }
+        }
+    }
+}
