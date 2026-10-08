@@ -33,5 +33,6 @@ Initial public release.
 - Light and dark theme support
 - LaunchAgent install script (`make install`)
 
-[Unreleased]: https://github.com/haric655/ipglance/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/haric655/ipglance/releases/tag/v1.0.0
+[Unreleased]: https://github.com/netglance/ipglance/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/netglance/ipglance/releases/tag/v1.1.0
+[1.0.0]: https://github.com/netglance/ipglance/releases/tag/v1.0.0

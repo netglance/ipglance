@@ -6,11 +6,11 @@ Only the latest released version of IPGlance receives security fixes.
 
 ## Reporting a vulnerability
 
-If you believe you've found a security issue in IPGlance — for example, a way for the app to leak data beyond what the [Privacy](README.md#privacy) section describes, an issue in the LaunchAgent install script, or a problem with how the App Group cache handles untrusted input — please report it privately.
+If you believe you've found a security issue in IPGlance — for example, a way for the app to leak data beyond what the [Privacy](README.md#privacy) section describes, a way to escalate privileges through the kill switch's root-installed pf rules (`/etc/pf.anchors/ipglance`) or sudoers entry (`/etc/sudoers.d/ipglance`), or a problem with how the App Group cache handles untrusted input — please report it privately.
 
 **Do not open a public GitHub issue for security reports.**
 
-Instead, please use GitHub's [private vulnerability reporting](https://github.com/haric655/ipglance/security/advisories/new) for this repository. If that's unavailable, email the maintainer directly (the address listed on the maintainer's GitHub profile).
+Instead, please use GitHub's [private vulnerability reporting](https://github.com/netglance/ipglance/security/advisories/new) for this repository. If that's unavailable, email the maintainer directly (the address listed on the maintainer's GitHub profile).
 
 When reporting, please include:
 

@@ -34,7 +34,7 @@
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>SUFeedURL</key>
-    <string>https://github.com/haric655/ipglance/releases/latest/download/appcast.xml</string>
+    <string>https://github.com/netglance/ipglance/releases/latest/download/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>Go/iNcRvIdINmyGVn6ixNlI2aBA/Z+uUBProZ1v2gFs=</string>
     <key>SUEnableAutomaticChecks</key>
