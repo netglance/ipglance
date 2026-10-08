@@ -88,19 +88,25 @@ final class IPViewModel {
 
     /// Applies the policy to the last known country. Called after every successful check
     /// and after settings change; failed checks never get here (fail-open).
+    /// In-memory only: set by manual unblock, cleared by the next allowed country or by toggling the switch.
+    private(set) var isKillSwitchPaused = false
+
     func applyKillSwitch() async {
         guard settings.killSwitchEnabled, let code = countryInfo?.countryCode, !code.isEmpty else { return }
         switch KillSwitchPolicy.action(country: code,
                                        allowed: Set(settings.allowedCountries),
-                                       isBlocked: isBlocked) {
+                                       isBlocked: isBlocked,
+                                       isPaused: isKillSwitchPaused) {
         case .block: await setBlocked(true)
         case .unblock: await setBlocked(false)
+        case .resume: isKillSwitchPaused = false
         case .none: break
         }
     }
 
     func setKillSwitch(enabled: Bool) async {
         killSwitchError = nil
+        isKillSwitchPaused = false
         guard enabled else {
             settings.killSwitchEnabled = false
             if isBlocked { await setBlocked(false) }
@@ -121,13 +127,14 @@ final class IPViewModel {
         await applyKillSwitch()
     }
 
-    /// Turns the kill switch off as well — otherwise the next check would block again.
+    /// Unblocks and pauses until an allowed country is seen — otherwise the next check would block again.
     func manualUnblock() async {
-        settings.killSwitchEnabled = false
         await setBlocked(false)
+        if !isBlocked && settings.killSwitchEnabled { isKillSwitchPaused = true }
     }
 
     func uninstallKillSwitch() async {
+        isKillSwitchPaused = false
         settings.killSwitchEnabled = false
         do {
             try await KillSwitch.uninstall()

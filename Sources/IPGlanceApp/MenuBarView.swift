@@ -86,15 +86,18 @@ struct MenuBarView: View {
 
     private var statusRow: some View {
         let ks = viewModel.settings.killSwitchEnabled
+        let paused = ks && viewModel.isKillSwitchPaused
         let showLeft = showsStatusLeft
         let failed = viewModel.errorMessage != nil
         let allowed = viewModel.settings.allowedCountries
         let flags = allowed.prefix(3).map { CountryInfo(ip: "", countryCode: $0, countryName: "").flagEmoji }.joined()
         let more = allowed.count > 3 ? " +\(allowed.count - 3)" : ""
-        let stateKey: LocalizedStringKey = ks ? "killswitch_on" : "killswitch_off"
-        let stateText = String(localized: ks ? "killswitch_on" : "killswitch_off", bundle: .module)
+        let key = paused ? "killswitch_paused" : ks ? "killswitch_on" : "killswitch_off"
+        let stateKey = LocalizedStringKey(key)
+        let stateText = String(localized: String.LocalizationValue(key), bundle: .module)
         var parts: [String] = []
         if showLeft { parts.append(stateText) }
+        if showLeft && paused { parts.append(String(localized: "killswitch_paused_resume", bundle: .module)) }
         if failed { parts.append(String(localized: "status_check_failed", bundle: .module)) }
         return Button {
             settingsTab = "killswitch"
@@ -106,10 +109,10 @@ struct MenuBarView: View {
                     Label {
                         Text(stateKey, bundle: .module)
                     } icon: {
-                        Image(systemName: ks ? "checkmark.shield" : "shield.slash")
+                        Image(systemName: paused ? "pause.circle" : ks ? "checkmark.shield" : "shield.slash")
                             .accessibilityHidden(true)
                     }
-                    .foregroundStyle(ks ? .primary : .secondary)
+                    .foregroundStyle((ks && !paused) ? .primary : .secondary)
                     if ks && !allowed.isEmpty {
                         Text(verbatim: flags + more).accessibilityHidden(true)
                     }
@@ -134,6 +137,7 @@ struct MenuBarView: View {
         .buttonStyle(.plain)
         .onHover { statusHovered = $0 }
         .padding(.horizontal, 8)
+        .help(paused ? String(localized: "killswitch_paused_resume", bundle: .module) : "")
         .accessibilityLabel(parts.joined(separator: ", "))
         .accessibilityHint(Text("killswitch_status_hint", bundle: .module))
     }

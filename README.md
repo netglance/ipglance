@@ -63,7 +63,7 @@ swift test --filter CountryInfoTests/testFlagEmojiRU
 
 ## Kill switch
 
-When enabled, IPGlance blocks outgoing traffic with a `pf` rule set (anchor `com.apple/ipglance`) as soon as your public IP's country is not in the list you allow, and lifts the block when it is again. Local networks, DNS and the geolocation APIs stay reachable.
+When enabled, IPGlance blocks outgoing traffic with a `pf` rule set (anchor `com.apple/ipglance`) as soon as your public IP's country is not in the list you allow, and lifts the block when it is again. "Unblock and pause" in the menu lifts it manually and pauses the kill switch until you're back in an allowed country, so a dropped VPN can reconnect. Local networks, DNS and the geolocation APIs stay reachable.
 
 It is reactive: the country is checked every 8–20 s, so some traffic may leak before the block applies. After a reboot it is inactive until IPGlance starts.
 

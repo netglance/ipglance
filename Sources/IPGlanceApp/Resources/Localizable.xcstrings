@@ -987,25 +987,25 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unblock and turn off"
+            "value": "Unblock and pause"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Разблокировать и отключить"
+            "value": "Разблокировать и приостановить"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Odblokuj i wyłącz"
+            "value": "Odblokuj i wstrzymaj"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Розблокувати й вимкнути"
+            "value": "Розблокувати й призупинити"
           }
         }
       }
@@ -1370,6 +1370,62 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нічого не знайдено"
+          }
+        }
+      }
+    },
+    "killswitch_paused": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kill switch paused"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kill switch приостановлен"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kill switch wstrzymany"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kill switch призупинено"
+          }
+        }
+      }
+    },
+    "killswitch_paused_resume": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "resumes in an allowed country"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "возобновится в разрешённой стране"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "wznowi się w dozwolonym kraju"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "відновиться в дозволеній країні"
           }
         }
       }

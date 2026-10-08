@@ -9,6 +9,7 @@ All notable changes to IPGlance are documented in this file. The format is based
 ### Added
 - Country kill switch: blocks outgoing traffic via pf when the public IP's country is not in the allowed list; auto-unblocks when it is
 - Status line in the menu showing the kill switch state
+- Unblocking from the menu pauses the kill switch until you're back in an allowed country, so a dropped VPN can reconnect
 - Buy Me a Coffee link in the menu and in Settings → About
 
 ### Changed
