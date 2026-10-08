@@ -4,14 +4,14 @@ import IPGlanceCore
 struct MenuBarView: View {
     var viewModel: IPViewModel
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettings
+    @AppStorage("settingsTab") private var settingsTab = "general"
 
     private var isDark: Bool { colorScheme == .dark }
     private var sub: Color { isDark ? .white.opacity(0.55) : .black.opacity(0.5) }
     private var hairline: Color { isDark ? .white.opacity(0.06) : .black.opacity(0.06) }
     private var statBg: Color { isDark ? .white.opacity(0.04) : .black.opacity(0.03) }
     private var stroke: Color { isDark ? .white.opacity(0.08) : .black.opacity(0.07) }
-    private var danger: Color { isDark ? Color(red: 1.0, green: 0.50, blue: 0.47) : Color(red: 0.70, green: 0.08, blue: 0.08) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -106,11 +106,11 @@ struct MenuBarView: View {
             if viewModel.isBlocked {
                 HStack(spacing: 8) {
                     Image(systemName: "lock.fill")
-                        .foregroundStyle(danger)
+                        .foregroundStyle(Color.danger)
                         .accessibilityHidden(true)
                     Text("killswitch_blocked", bundle: .module)
                         .font(.system(size: 12.5, weight: .semibold))
-                        .foregroundStyle(danger)
+                        .foregroundStyle(Color.danger)
                         .lineLimit(1)
                         .layoutPriority(1)
                     Spacer()
@@ -131,11 +131,11 @@ struct MenuBarView: View {
             if let error = viewModel.killSwitchError {
                 HStack(alignment: .top, spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(danger)
+                        .foregroundStyle(Color.danger)
                         .accessibilityHidden(true)
                     Text(verbatim: error)
                         .font(.system(size: 11))
-                        .foregroundStyle(danger)
+                        .foregroundStyle(Color.danger)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(.horizontal, 10)
@@ -143,7 +143,7 @@ struct MenuBarView: View {
             }
         }
         .padding(.vertical, 4)
-        .background(danger.opacity(0.08))
+        .background(Color.danger.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .padding(.horizontal, 14)
         .padding(.bottom, 10)
@@ -166,14 +166,15 @@ struct MenuBarView: View {
                 Task { await viewModel.refresh() }
             }
             ActionRow(icon: "gearshape", label: "settings_ellipsis", hint: "⌘,", isDark: isDark) {
-                // LSUIElement agents don't auto-foreground on openWindow — without this
+                // LSUIElement agents don't auto-foreground — without this
                 // the window opens behind whatever app is currently active.
                 NSApplication.shared.activate()
-                openWindow(id: "settings")
+                openSettings()
             }
             ActionRow(icon: "info.circle", label: "about", hint: "", isDark: isDark) {
+                settingsTab = "about"
                 NSApplication.shared.activate()
-                openWindow(id: "about")
+                openSettings()
             }
         }
         .padding(.horizontal, 8)

@@ -254,230 +254,6 @@
         }
       }
     },
-    "empty": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "(empty)"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "(пусто)"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "(puste)"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "(порожньо)"
-          }
-        }
-      }
-    },
-    "footer_hint": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Changes are applied immediately after saving"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Изменения применяются сразу после сохранения"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zmiany są stosowane od razu po zapisaniu"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Зміни застосовуються одразу після збереження"
-          }
-        }
-      }
-    },
-    "interval_1m": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 min"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 мин"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 min"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 хв"
-          }
-        }
-      }
-    },
-    "interval_30s": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "30 sec"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "30 с"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "30 sek"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "30 с"
-          }
-        }
-      }
-    },
-    "interval_5m": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "5 min"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "5 мин"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "5 min"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "5 хв"
-          }
-        }
-      }
-    },
-    "interval_hint": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "How often to check the current IP"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Как часто проверять текущий IP"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Jak często sprawdzać aktualny IP"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Як часто перевіряти поточний IP"
-          }
-        }
-      }
-    },
-    "interval_label": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Interval"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Интервал"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Interwał"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Інтервал"
-          }
-        }
-      }
-    },
-    "interval_manual": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Manual"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Вручную"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ręcznie"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Вручну"
-          }
-        }
-      }
-    },
     "preview": {
       "localizations": {
         "en": {
@@ -618,90 +394,6 @@
         }
       }
     },
-    "save": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Save"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Сохранить"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zapisz"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Зберегти"
-          }
-        }
-      }
-    },
-    "section_launch": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Launch"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Запуск"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Uruchamianie"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Запуск"
-          }
-        }
-      }
-    },
-    "section_update": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Update"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Обновление"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aktualizacja"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Оновлення"
-          }
-        }
-      }
-    },
     "settings_ellipsis": {
       "localizations": {
         "en": {
@@ -753,7 +445,7 @@
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Код країны"
+            "value": "Код країни"
           }
         }
       }
@@ -1122,62 +814,6 @@
         }
       }
     },
-    "window_about_title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "About IPGlance"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "О программе IPGlance"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "O programie IPGlance"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Про програму IPGlance"
-          }
-        }
-      }
-    },
-    "window_settings_title": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IPGlance — Settings"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IPGlance — Настройки"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IPGlance — Ustawienia"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IPGlance — Налаштування"
-          }
-        }
-      }
-    },
     "section_killswitch": {
       "localizations": {
         "en": {
@@ -1463,25 +1099,25 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "System rules are missing — turn the kill switch on in Settings and click Save to reinstall them."
+            "value": "System rules are missing — turn the kill switch off and on again in Settings to reinstall them."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Системные правила не найдены — включите kill switch в «Настройках» и нажмите «Сохранить», чтобы установить их заново."
+            "value": "Системные правила не найдены — выключите и снова включите kill switch в «Настройках», чтобы установить их заново."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Brak reguł systemowych — włącz kill switch w Ustawieniach i kliknij Zapisz, aby zainstalować je ponownie."
+            "value": "Brak reguł systemowych — wyłącz i ponownie włącz kill switch w Ustawieniach, aby zainstalować je ponownie."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Системні правила не знайдено — увімкніть kill switch у «Налаштуваннях» і натисніть «Зберегти», щоб установити їх знову."
+            "value": "Системні правила не знайдено — вимкніть і знову ввімкніть kill switch у «Налаштуваннях», щоб установити їх знову."
           }
         }
       }
@@ -1514,58 +1150,114 @@
         }
       }
     },
-    "toggle_on": {
+    "section_menubar": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "On"
+            "value": "Menu bar"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Включено"
+            "value": "Строка меню"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Włączone"
+            "value": "Pasek menu"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Увімкнено"
+            "value": "Рядок меню"
           }
         }
       }
     },
-    "toggle_off": {
+    "killswitch_remove_current_title": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Off"
+            "value": "Remove your current country?"
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Выключено"
+            "value": "Удалить текущую страну?"
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Wyłączone"
+            "value": "Usunąć bieżący kraj?"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Вимкнено"
+            "value": "Видалити поточну країну?"
+          }
+        }
+      }
+    },
+    "killswitch_remove_current_message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You're in %@ right now. With the kill switch on, the internet will be blocked immediately."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сейчас вы в стране %@. При включённом kill switch интернет сразу заблокируется."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jesteś teraz w: %@. Przy włączonym kill switch internet zostanie natychmiast zablokowany."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зараз ви в країні %@. За увімкненого kill switch інтернет одразу заблокується."
+          }
+        }
+      }
+    },
+    "killswitch_remove_current_confirm": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove and block"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить и заблокировать"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usuń i zablokuj"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Видалити й заблокувати"
           }
         }
       }
