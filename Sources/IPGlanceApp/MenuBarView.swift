@@ -124,7 +124,6 @@ struct MenuBarView: View {
         .buttonStyle(.plain)
         .onHover { statusHovered = $0 }
         .padding(.horizontal, 8)
-        .accessibilityElement(children: .ignore)
         .accessibilityLabel(statusAccessibilityLabel(stateText, showLeft: showLeft, now: context.date))
         .accessibilityHint(Text("killswitch_status_hint", bundle: .module))
         }
@@ -282,6 +281,8 @@ struct MenuBarView: View {
         } label: {
             (Text("recently", bundle: .module) + Text(verbatim: " (\(viewModel.history.count))"))
                 .font(.system(size: 12))
+                .contentShape(Rectangle())
+                .onTapGesture { historyExpanded.toggle() }
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 4)

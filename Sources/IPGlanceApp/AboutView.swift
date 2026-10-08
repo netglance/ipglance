@@ -16,8 +16,8 @@ struct AboutTab: View {
                         .resizable()
                         .frame(width: 64, height: 64)
                         .accessibilityHidden(true)
-                    Text("IPGlance").font(.title2.bold())
-                    Text("v \(appVersion)").foregroundStyle(.secondary)
+                    Text(verbatim: "IPGlance").font(.title2.bold())
+                    Text(verbatim: "v \(appVersion)").foregroundStyle(.secondary)
                     Text("about_description", bundle: .module)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -46,7 +46,7 @@ struct AboutTab: View {
             Section {
                 Link(destination: buyMeACoffeeURL) {
                     HStack(spacing: 6) {
-                        Text("☕").accessibilityHidden(true)
+                        Text(verbatim: "☕").accessibilityHidden(true)
                         Text(verbatim: "Buy Me a Coffee")
                     }
                 }
