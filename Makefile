@@ -4,7 +4,6 @@ APP       := $(BUILD_DIR)/Build/Products/Release/IPGlanceApp.app
 VERSION   := $(shell cat VERSION)
 DMG_NAME  := IPGlance-$(VERSION).dmg
 DMG_TMP   := /tmp/dmg-staging
-DMG_ASSETS := /tmp/dmg-assets
 
 XCODE_FLAGS := \
 	-project IPGlanceApp.xcodeproj \
@@ -44,21 +43,15 @@ xcode:
 	open IPGlanceApp.xcodeproj
 
 dmg: build
-	@echo "🎨 Generating DMG assets…"
-	@bash scripts/icon-from-svg.sh "$(DMG_ASSETS)"
-	@swift scripts/generate-dmg-assets.swift "$(DMG_ASSETS)"
-	@echo "🖼️  Injecting app icon…"
-	@cp "$(DMG_ASSETS)/AppIcon.icns" "$(APP)/Contents/Resources/AppIcon.icns"
-	@swift scripts/set-app-icon.swift "$(DMG_ASSETS)/AppIcon.icns" "$(APP)"
 	@echo "📦 Building $(DMG_NAME)…"
 	@rm -f "$(DMG_NAME)"
 	@rm -rf "$(DMG_TMP)" && mkdir -p "$(DMG_TMP)"
 	@cp -r "$(APP)" "$(DMG_TMP)/IPGlance.app"
-	@cp "$(DMG_ASSETS)/AppIcon.icns" "$(DMG_TMP)/.VolumeIcon.icns" 2>/dev/null || true
+	@cp SupportingFiles/AppIcon.icns "$(DMG_TMP)/.VolumeIcon.icns" 2>/dev/null || true
 	@create-dmg \
 		--volname "IPGlance" \
-		--volicon "$(DMG_ASSETS)/AppIcon.icns" \
-		--background "$(DMG_ASSETS)/background.png" \
+		--volicon SupportingFiles/AppIcon.icns \
+		--background SupportingFiles/dmg-background.png \
 		--window-pos 200 150 \
 		--window-size 660 400 \
 		--icon-size 120 \
@@ -68,7 +61,7 @@ dmg: build
 		--no-internet-enable \
 		"$(DMG_NAME)" \
 		"$(DMG_TMP)"
-	@rm -rf "$(DMG_TMP)" "$(DMG_ASSETS)"
+	@rm -rf "$(DMG_TMP)"
 	@echo "✅ $(DMG_NAME) ready"
 
 # ─── Sparkle release pipeline ────────────────────────────────────────────
