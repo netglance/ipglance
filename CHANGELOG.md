@@ -8,7 +8,7 @@ All notable changes to IPGlance are documented in this file. The format is based
 
 ### Added
 - Country kill switch: blocks outgoing traffic via pf when the public IP's country is not in the allowed list; auto-unblocks when it is
-- Status line in the menu: kill switch state and time since the last check
+- Status line in the menu showing the kill switch state
 - Buy Me a Coffee link in the menu and in Settings → About
 
 ### Changed

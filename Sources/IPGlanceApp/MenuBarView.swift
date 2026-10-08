@@ -9,17 +9,15 @@ struct MenuBarView: View {
     @State private var historyExpanded = false
     @State private var statusHovered = false
 
-    private static let relative: RelativeDateTimeFormatter = {
-        let f = RelativeDateTimeFormatter(); f.unitsStyle = .short; f.dateTimeStyle = .named; return f
-    }()
-
     var body: some View {
         VStack(spacing: 0) {
             heroSection
             if viewModel.isBlocked || viewModel.killSwitchError != nil {
                 killSwitchSection
             }
-            statusRow
+            if showsStatusRow {
+                statusRow
+            }
             buttonsRow
             if !viewModel.history.isEmpty {
                 historySection
@@ -83,17 +81,22 @@ struct MenuBarView: View {
 
     // MARK: - Status
 
+    private var showsStatusLeft: Bool { !(viewModel.isBlocked || viewModel.killSwitchError != nil) }
+    private var showsStatusRow: Bool { showsStatusLeft || viewModel.errorMessage != nil }
+
     private var statusRow: some View {
         let ks = viewModel.settings.killSwitchEnabled
-        let showLeft = !(viewModel.isBlocked || viewModel.killSwitchError != nil)
+        let showLeft = showsStatusLeft
+        let failed = viewModel.errorMessage != nil
         let allowed = viewModel.settings.allowedCountries
         let flags = allowed.prefix(3).map { CountryInfo(ip: "", countryCode: $0, countryName: "").flagEmoji }.joined()
         let more = allowed.count > 3 ? " +\(allowed.count - 3)" : ""
         let stateKey: LocalizedStringKey = ks ? "killswitch_on" : "killswitch_off"
         let stateText = String(localized: ks ? "killswitch_on" : "killswitch_off", bundle: .module)
-        // ponytail: ticks every second even while the popover is hidden — negligible cost; switch to an onAppear-driven timer if it ever shows in Energy.
-        return TimelineView(.periodic(from: .now, by: 1)) { context in
-        Button {
+        var parts: [String] = []
+        if showLeft { parts.append(stateText) }
+        if failed { parts.append(String(localized: "status_check_failed", bundle: .module)) }
+        return Button {
             settingsTab = "killswitch"
             NSApplication.shared.activate()
             openSettings()
@@ -112,7 +115,14 @@ struct MenuBarView: View {
                     }
                 }
                 Spacer()
-                lastCheckLabel(now: context.date)
+                if failed {
+                    Label {
+                        Text("status_check_failed", bundle: .module)
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle").accessibilityHidden(true)
+                    }
+                    .foregroundStyle(.secondary)
+                }
             }
             .font(.system(size: 12))
             .padding(.horizontal, 10)
@@ -124,48 +134,8 @@ struct MenuBarView: View {
         .buttonStyle(.plain)
         .onHover { statusHovered = $0 }
         .padding(.horizontal, 8)
-        .accessibilityLabel(statusAccessibilityLabel(stateText, showLeft: showLeft, now: context.date))
+        .accessibilityLabel(parts.joined(separator: ", "))
         .accessibilityHint(Text("killswitch_status_hint", bundle: .module))
-        }
-    }
-
-    @ViewBuilder private func lastCheckLabel(now: Date) -> some View {
-        if viewModel.errorMessage != nil {
-            Label {
-                Text("status_check_failed", bundle: .module)
-            } icon: {
-                Image(systemName: "exclamationmark.triangle").accessibilityHidden(true)
-            }
-            .foregroundStyle(.secondary)
-        } else if let last = viewModel.lastUpdated {
-            Label {
-                Text(verbatim: Self.relative.localizedString(for: last, relativeTo: now))
-            } icon: {
-                Image(systemName: "clock").accessibilityHidden(true)
-            }
-            .foregroundStyle(.secondary)
-        } else {
-            Label {
-                Text("update_status_checking", bundle: .module)
-            } icon: {
-                Image(systemName: "clock").accessibilityHidden(true)
-            }
-            .foregroundStyle(.secondary)
-        }
-    }
-
-    private func statusAccessibilityLabel(_ state: String, showLeft: Bool, now: Date) -> String {
-        var parts: [String] = []
-        if showLeft { parts.append(state) }
-        if viewModel.errorMessage != nil {
-            parts.append(String(localized: "status_check_failed", bundle: .module))
-        } else if let last = viewModel.lastUpdated {
-            let rel = Self.relative.localizedString(for: last, relativeTo: now)
-            parts.append(String(format: String(localized: "status_checked", bundle: .module), rel))
-        } else {
-            parts.append(String(localized: "update_status_checking", bundle: .module))
-        }
-        return parts.joined(separator: ", ")
     }
 
     // MARK: - Kill switch

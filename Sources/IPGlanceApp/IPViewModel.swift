@@ -9,7 +9,6 @@ final class IPViewModel {
     var countryInfo: CountryInfo?
     var isLoading = false
     var errorMessage: String?
-    private(set) var lastUpdated: Date?
     var history: [CountryInfo] = []
     var isBlocked = false
     var killSwitchError: String?
@@ -75,7 +74,6 @@ final class IPViewModel {
                 if history.count > 5 { history.removeLast() }
             }
             countryInfo = newInfo
-            lastUpdated = Date()
             errorMessage = nil
             SharedStore.write(newInfo)
             WidgetCenter.shared.reloadAllTimelines()
