@@ -226,12 +226,20 @@ private struct CountryPicker: View {
             TextField(text: $query, prompt: Text("killswitch_search_prompt", bundle: .module)) {
                 Text("killswitch_search_prompt", bundle: .module)
             }
-            .textFieldStyle(.roundedBorder)
-            .padding(8)
+            .textFieldStyle(.plain)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background {
+                let shape = RoundedRectangle(cornerRadius: 10, style: .continuous)
+                shape.fill(.quaternary.opacity(0.5))
+                    .overlay(shape.strokeBorder(focused ? Color.accentColor.opacity(0.5) : Color.primary.opacity(0.1),
+                                                lineWidth: focused ? 1.5 : 0.5))
+            }
             .focused($focused)
+            .focusEffectDisabled()
+            .padding(10)
             // ponytail: no up/down arrows in the field; typing narrows to 1-3 rows. Upgrade: @State index + onKeyPress.
             .onSubmit { if searching, let first = results.first { onPick(first) } }
-            Divider()
             if results.isEmpty {
                 Text("killswitch_search_empty", bundle: .module)
                     .foregroundStyle(.secondary)
@@ -252,8 +260,17 @@ private struct CountryPicker: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(Text(verbatim: KillSwitchTab.regionName(code)))
-                    .listRowBackground(searching && code == results.first ? Color.accentColor.opacity(0.15) : Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 2, leading: 10, bottom: 2, trailing: 10))
+                    .listRowBackground(
+                        searching && code == results.first
+                            ? RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color.accentColor.opacity(0.15)).padding(.horizontal, 6)
+                            : nil
+                    )
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
             }
         }
         .frame(width: 280, height: 320)
