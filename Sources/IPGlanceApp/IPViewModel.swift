@@ -10,6 +10,8 @@ final class IPViewModel {
     var isLoading = false
     var errorMessage: String?
     var history: [CountryInfo] = []
+    var isBlocked = false
+    var killSwitchError: String?
 
     let settings: AppSettings
     private let service: IPGeolocationService
@@ -22,6 +24,10 @@ final class IPViewModel {
     private let refreshIntervalRange: ClosedRange<Int> = 8...20
 
     var statusText: String {
+        isBlocked ? "🔒 " + baseStatusText : baseStatusText
+    }
+
+    private var baseStatusText: String {
         if isLoading { return "🌐 ..." }
         guard let info = countryInfo else {
             return errorMessage != nil ? "🌐 ?" : "🌐 ..."
@@ -37,7 +43,11 @@ final class IPViewModel {
          service: IPGeolocationService = IPGeolocationService()) {
         self.settings = settings
         self.service = service
-        Task { await self.refresh() }
+        Task {
+            // The block outlives the app, so read the real pf state first.
+            self.isBlocked = await KillSwitch.isBlocked()
+            await self.refresh()
+        }
         startNetworkMonitoring()
         startPeriodicRefresh()
     }
@@ -67,10 +77,79 @@ final class IPViewModel {
             countryInfo = newInfo
             SharedStore.write(newInfo)
             WidgetCenter.shared.reloadAllTimelines()
+            await applyKillSwitch()
         } catch {
             errorMessage = error.localizedDescription
         }
         isLoading = false
+    }
+
+    // MARK: - Kill switch
+
+    /// Applies the policy to the last known country. Called after every successful check
+    /// and after settings change; failed checks never get here (fail-open).
+    func applyKillSwitch() async {
+        guard settings.killSwitchEnabled, let code = countryInfo?.countryCode, !code.isEmpty else { return }
+        switch KillSwitchPolicy.action(country: code,
+                                       allowed: Set(settings.allowedCountries),
+                                       isBlocked: isBlocked) {
+        case .block: await setBlocked(true)
+        case .unblock: await setBlocked(false)
+        case .none: break
+        }
+    }
+
+    func setKillSwitch(enabled: Bool) async {
+        killSwitchError = nil
+        guard enabled else {
+            settings.killSwitchEnabled = false
+            if isBlocked { await setBlocked(false) }
+            return
+        }
+        if !KillSwitch.isInstalled {
+            do {
+                try await KillSwitch.install()
+            } catch {
+                settings.killSwitchEnabled = false
+                if case KillSwitchError.cancelled = error {} else {
+                    killSwitchError = error.localizedDescription
+                }
+                return
+            }
+        }
+        settings.killSwitchEnabled = true
+        await applyKillSwitch()
+    }
+
+    /// Turns the kill switch off as well — otherwise the next check would block again.
+    func manualUnblock() async {
+        settings.killSwitchEnabled = false
+        await setBlocked(false)
+    }
+
+    func uninstallKillSwitch() async {
+        settings.killSwitchEnabled = false
+        do {
+            try await KillSwitch.uninstall()
+            isBlocked = false
+            killSwitchError = nil
+        } catch {
+            if case KillSwitchError.cancelled = error {} else {
+                killSwitchError = error.localizedDescription
+            }
+        }
+    }
+
+    private func setBlocked(_ block: Bool) async {
+        do {
+            if block { try await KillSwitch.block() } else { try await KillSwitch.unblock() }
+            isBlocked = block
+            killSwitchError = nil
+        } catch {
+            killSwitchError = KillSwitch.isInstalled
+                ? error.localizedDescription
+                : String(localized: "killswitch_reinstall_hint", bundle: .module)
+        }
     }
 
     private func startNetworkMonitoring() {
