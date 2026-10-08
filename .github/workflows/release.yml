@@ -1,5 +1,6 @@
-# Release: update VERSION + CHANGELOG.md, then run `make release` (pushes tag vX.Y.Z).
-# The tag triggers this workflow: DMG + signed Sparkle appcast + SHA256SUMS -> GitHub Release.
+# Release: update VERSION + CHANGELOG.md, then run `make release` (pushes tag vX.Y.Z from main).
+# The tag triggers this workflow: `build` makes the DMG with no secrets; `publish` (clean runner,
+# no repo code, pinned Sparkle tools) signs the appcast, checksums it and creates the GitHub Release.
 # One-time: set repo secret SPARKLE_ED_PRIVATE_KEY (output of `generate_keys -x`).
 name: Release
 
@@ -7,12 +8,13 @@ on:
   push:
     tags: ["v*"]
 
-permissions:
-  contents: write  # needed to create GitHub Releases
+permissions: {}
 
 jobs:
-  release:
+  build:
     runs-on: macos-14
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -32,20 +34,60 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
-      - name: Build DMG
-        run: make dmg
+      - name: Build DMG and release notes
+        run: make dmg notes
+
+      - name: Upload build output
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-files
+          path: |
+            IPGlance-*.dmg
+            build/release/IPGlance-*.md
+          if-no-files-found: error
+          retention-days: 1
+
+  # Never checks out or runs repo code: the only executables are the checksum-pinned Sparkle tools.
+  publish:
+    needs: build
+    runs-on: macos-14
+    permissions:
+      contents: write  # needed to create GitHub Releases
+    steps:
+      - name: Verify the tag points at main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          status=$(gh api "repos/$GITHUB_REPOSITORY/compare/main...$GITHUB_SHA" --jq .status)
+          case "$status" in identical|behind) ;; *) echo "::error::tag commit is not on main ($status)"; exit 1;; esac
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-files
+          path: release
+
+      - name: Fetch Sparkle tools (pinned)
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/sparkle.tar.xz" https://github.com/sparkle-project/Sparkle/releases/download/2.9.2/Sparkle-2.9.2.tar.xz
+          echo "1cb340cbbef04c6c0d162078610c25e2221031d794a3449d89f2f56f4df77c95  $RUNNER_TEMP/sparkle.tar.xz" | shasum -a 256 -c -
+          mkdir "$RUNNER_TEMP/sparkle" && tar -xJf "$RUNNER_TEMP/sparkle.tar.xz" -C "$RUNNER_TEMP/sparkle"
 
       - name: Sign appcast and checksums
         env:
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
         run: |
           test -n "$SPARKLE_ED_PRIVATE_KEY" || { echo "::error::SPARKLE_ED_PRIVATE_KEY secret is not set"; exit 1; }
-          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" | make release-assets SPARKLE_KEY_FILE=-
+          # artifact keeps relative paths; put the notes .md next to the dmg for generate_appcast
+          mv release/build/release/IPGlance-*.md release/
+          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" | "$RUNNER_TEMP/sparkle/bin/generate_appcast" --ed-key-file - \
+            --embed-release-notes \
+            --download-url-prefix "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/" release
+          (cd release && shasum -a 256 IPGlance-*.dmg > SHA256SUMS)
 
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" \
-            --notes-file "build/release/IPGlance-$(cat VERSION).md" \
-            build/release/IPGlance-*.dmg build/release/appcast.xml build/release/SHA256SUMS
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$GITHUB_REF_NAME" \
+            --notes-file "release/IPGlance-${GITHUB_REF_NAME#v}.md" \
+            release/IPGlance-*.dmg release/appcast.xml release/SHA256SUMS

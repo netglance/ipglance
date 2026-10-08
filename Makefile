@@ -17,10 +17,10 @@ XCODE_FLAGS := \
 	MARKETING_VERSION=$(VERSION) \
 	CURRENT_PROJECT_VERSION=$(VERSION)
 
-.PHONY: build run stop clean test xcode dmg release-keys notes appcast release-assets release
+.PHONY: build run stop clean test xcode dmg release-keys notes appcast release
 
 build:
-	xcodebuild $(XCODE_FLAGS) build </dev/null | grep -E "^(error:|warning:|Build succeeded|FAILED|.*\.swift.*error)"
+	xcodebuild $(XCODE_FLAGS) build | grep -E "^(error:|warning:|Build succeeded|FAILED|.*\.swift.*error)"
 
 run: build
 	@pkill -9 -x IPGlanceApp 2>/dev/null; sleep 0.5; true
@@ -61,7 +61,7 @@ dmg: build
 		--hide-extension "IPGlance.app" \
 		--no-internet-enable \
 		"$(DMG_NAME)" \
-		"$(DMG_TMP)" </dev/null
+		"$(DMG_TMP)"
 	@rm -rf "$(DMG_TMP)"
 	@echo "✅ $(DMG_NAME) ready"
 
@@ -98,8 +98,8 @@ notes:
 	fi
 
 # Regenerate $(RELEASES_DIR)/appcast.xml from every .dmg in it, signed with the
-# EdDSA private key. Key source: Keychain by default; if SPARKLE_KEY_FILE is set
-# it is passed as --ed-key-file (use `-` to read the key from stdin, as CI does).
+# EdDSA private key from the Keychain. Local manual fallback only: CI signs in
+# the isolated `publish` job of release.yml with pinned Sparkle tools.
 # The IPGlance-X.Y.Z.md next to each dmg is embedded as release notes, and
 # enclosure URLs point at this version's GitHub Release assets.
 appcast:
@@ -109,19 +109,11 @@ appcast:
 	@mkdir -p $(RELEASES_DIR)
 	"$(SPARKLE_BIN)/generate_appcast" --embed-release-notes \
 		--download-url-prefix $(REPO_URL)/releases/download/v$(VERSION)/ \
-		$(if $(SPARKLE_KEY_FILE),--ed-key-file $(SPARKLE_KEY_FILE)) $(RELEASES_DIR)
-
-# CI: run `make dmg` first in a step without secrets; this target only copies,
-# signs and checksums (all output in $(RELEASES_DIR)).
-release-assets: notes
-	@test -f $(DMG_NAME) || { echo "❌ $(DMG_NAME) not found: run make dmg first."; exit 1; }
-	cp $(DMG_NAME) $(RELEASES_DIR)/
-	@$(MAKE) --no-print-directory appcast
-	cd $(RELEASES_DIR) && shasum -a 256 $(DMG_NAME) > SHA256SUMS
+		$(RELEASES_DIR)
 
 # Maintainer: after bumping VERSION and writing the CHANGELOG.md section, tag
-# and push. The tag triggers the Release workflow, which builds, signs and
-# publishes the GitHub Release.
+# and push. The tag (must be on main) triggers the Release workflow, which builds
+# the DMG, then signs and publishes the GitHub Release in a separate job.
 release: notes
 	@git diff --quiet && git diff --cached --quiet || { echo "❌ Working tree is not clean."; exit 1; }
 	@[ "$$(git rev-parse --abbrev-ref HEAD)" = main ] || { echo "❌ Not on main."; exit 1; }
