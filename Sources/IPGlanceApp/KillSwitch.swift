@@ -46,6 +46,7 @@ enum KillSwitch {
 
     /// `false` when rules are not installed or sudo fails.
     static func isBlocked() async -> Bool {
+        guard isInstalled else { return false }
         let output = (try? await sudo(KillSwitchConfig.statusArgs)) ?? ""
         return !output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }

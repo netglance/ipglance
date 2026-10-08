@@ -12,11 +12,11 @@ public enum KillSwitchConfig {
     // Hosts must match the provider URLs in Providers/.
     public static let rules = """
     # IPGlance kill switch — managed by IPGlance, do not edit
-    pass quick on lo0 all
-    pass out quick inet to { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16, 224.0.0.0/4, 255.255.255.255 }
-    pass out quick inet6 to { fe80::/10, ff00::/8, fc00::/7 }
-    pass out quick proto { udp, tcp } to any port 53
-    pass out quick proto tcp to { ipapi.co, ipinfo.io, ipwhois.app } port 443
+    pass quick on lo0 all no state
+    pass out quick inet to { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16, 224.0.0.0/4, 255.255.255.255 } no state
+    pass out quick inet6 to { fe80::/10, ff00::/8, fc00::/7 } no state
+    pass out quick proto { udp, tcp } to any port 53 no state
+    pass out quick proto tcp to { ipapi.co, ipinfo.io, ipwhois.app } port 443 no state
     block drop out quick all
 
     """

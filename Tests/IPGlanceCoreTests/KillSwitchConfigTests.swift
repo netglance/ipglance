@@ -34,6 +34,12 @@ final class KillSwitchConfigTests: XCTestCase {
         XCTAssertTrue(rules.hasSuffix("block drop out quick all\n"))
     }
 
+    func testPassRulesAreStateless() {
+        let passLines = KillSwitchConfig.rules.split(separator: "\n").filter { $0.hasPrefix("pass") }
+        XCTAssertEqual(passLines.count, 5)
+        for line in passLines { XCTAssertTrue(line.hasSuffix("no state"), String(line)) }
+    }
+
     func testInstallScriptEmbedsFilesAsBase64() throws {
         let script = try XCTUnwrap(KillSwitchConfig.installScript(user: "vlad"))
         let rules64 = Data(KillSwitchConfig.rules.utf8).base64EncodedString()

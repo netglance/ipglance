@@ -1463,25 +1463,25 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "System rules are missing — open Settings and click Save to reinstall them."
+            "value": "System rules are missing — turn the kill switch on in Settings and click Save to reinstall them."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Системные правила не найдены — откройте «Настройки» и нажмите «Сохранить», чтобы установить их заново."
+            "value": "Системные правила не найдены — включите kill switch в «Настройках» и нажмите «Сохранить», чтобы установить их заново."
           }
         },
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "Brak reguł systemowych — otwórz Ustawienia i kliknij Zapisz, aby zainstalować je ponownie."
+            "value": "Brak reguł systemowych — włącz kill switch w Ustawieniach i kliknij Zapisz, aby zainstalować je ponownie."
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Системні правила не знайдено — відкрийте «Налаштування» й натисніть «Зберегти», щоб установити їх знову."
+            "value": "Системні правила не знайдено — увімкніть kill switch у «Налаштуваннях» і натисніть «Зберегти», щоб установити їх знову."
           }
         }
       }
