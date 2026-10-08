@@ -9,6 +9,7 @@ final class IPViewModel {
     var countryInfo: CountryInfo?
     var isLoading = false
     var errorMessage: String?
+    private(set) var lastUpdated: Date?
     var history: [CountryInfo] = []
     var isBlocked = false
     var killSwitchError: String?
@@ -28,7 +29,7 @@ final class IPViewModel {
     }
 
     private var baseStatusText: String {
-        if isLoading { return "🌐 ..." }
+        if isLoading && countryInfo == nil { return "🌐 ..." }
         guard let info = countryInfo else {
             return errorMessage != nil ? "🌐 ?" : "🌐 ..."
         }
@@ -67,7 +68,6 @@ final class IPViewModel {
 
     func refresh() async {
         isLoading = true
-        errorMessage = nil
         do {
             let newInfo = try await service.fetchCountryInfo()
             if let current = countryInfo, current.ip != newInfo.ip {
@@ -75,6 +75,8 @@ final class IPViewModel {
                 if history.count > 5 { history.removeLast() }
             }
             countryInfo = newInfo
+            lastUpdated = Date()
+            errorMessage = nil
             SharedStore.write(newInfo)
             WidgetCenter.shared.reloadAllTimelines()
             await applyKillSwitch()
