@@ -91,7 +91,9 @@ struct MenuBarView: View {
         let more = allowed.count > 3 ? " +\(allowed.count - 3)" : ""
         let stateKey: LocalizedStringKey = ks ? "killswitch_on" : "killswitch_off"
         let stateText = String(localized: ks ? "killswitch_on" : "killswitch_off", bundle: .module)
-        return Button {
+        // ponytail: ticks every second even while the popover is hidden — negligible cost; switch to an onAppear-driven timer if it ever shows in Energy.
+        return TimelineView(.periodic(from: .now, by: 1)) { context in
+        Button {
             settingsTab = "killswitch"
             NSApplication.shared.activate()
             openSettings()
@@ -110,23 +112,25 @@ struct MenuBarView: View {
                     }
                 }
                 Spacer()
-                lastCheckLabel
+                lastCheckLabel(now: context.date)
             }
             .font(.system(size: 12))
             .padding(.horizontal, 10)
             .padding(.vertical, 7)
             .background(statusHovered ? Color.primary.opacity(0.07) : Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 7))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { statusHovered = $0 }
         .padding(.horizontal, 8)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(statusAccessibilityLabel(stateText, showLeft: showLeft))
+        .accessibilityLabel(statusAccessibilityLabel(stateText, showLeft: showLeft, now: context.date))
         .accessibilityHint(Text("killswitch_status_hint", bundle: .module))
+        }
     }
 
-    @ViewBuilder private var lastCheckLabel: some View {
+    @ViewBuilder private func lastCheckLabel(now: Date) -> some View {
         if viewModel.errorMessage != nil {
             Label {
                 Text("status_check_failed", bundle: .module)
@@ -136,10 +140,7 @@ struct MenuBarView: View {
             .foregroundStyle(.secondary)
         } else if let last = viewModel.lastUpdated {
             Label {
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    Text(verbatim: Self.relative.localizedString(for: last, relativeTo: context.date))
-                }
-                // ponytail: ticks every second even while the popover is hidden — negligible cost; switch to an onAppear-driven timer if it ever shows in Energy.
+                Text(verbatim: Self.relative.localizedString(for: last, relativeTo: now))
             } icon: {
                 Image(systemName: "clock").accessibilityHidden(true)
             }
@@ -154,13 +155,13 @@ struct MenuBarView: View {
         }
     }
 
-    private func statusAccessibilityLabel(_ state: String, showLeft: Bool) -> String {
+    private func statusAccessibilityLabel(_ state: String, showLeft: Bool, now: Date) -> String {
         var parts: [String] = []
         if showLeft { parts.append(state) }
         if viewModel.errorMessage != nil {
             parts.append(String(localized: "status_check_failed", bundle: .module))
         } else if let last = viewModel.lastUpdated {
-            let rel = Self.relative.localizedString(for: last, relativeTo: .now)
+            let rel = Self.relative.localizedString(for: last, relativeTo: now)
             parts.append(String(format: String(localized: "status_checked", bundle: .module), rel))
         } else {
             parts.append(String(localized: "update_status_checking", bundle: .module))
@@ -232,11 +233,14 @@ struct MenuBarView: View {
                     copied = false
                 }
             } label: {
+                Group {
                 if copied {
                     Label { Text("copied", bundle: .module) } icon: { Image(systemName: "checkmark") }
                 } else {
                     Label { Text("copy_ip", bundle: .module) } icon: { Image(systemName: "doc.on.doc") }
                 }
+                }
+                .frame(maxWidth: .infinity)
             }
             .keyboardShortcut("c")
             .disabled(viewModel.countryInfo == nil)
@@ -246,6 +250,7 @@ struct MenuBarView: View {
                 Task { await viewModel.refresh() }
             } label: {
                 Label { Text("refresh", bundle: .module) } icon: { Image(systemName: "arrow.clockwise") }
+                    .frame(maxWidth: .infinity)
             }
             .keyboardShortcut("r")
             .disabled(viewModel.isLoading)
@@ -253,7 +258,6 @@ struct MenuBarView: View {
         }
         .buttonStyle(.bordered)
         .controlSize(.regular)
-        .frame(maxWidth: .infinity)
         .padding(.horizontal, 14)
         .padding(.vertical, 6)
     }
