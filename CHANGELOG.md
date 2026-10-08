@@ -8,6 +8,14 @@ All notable changes to IPGlance are documented in this file. The format is based
 
 ### Added
 - Country kill switch: blocks outgoing traffic via pf when the public IP's country is not in the allowed list; auto-unblocks when it is
+- Status line in the menu: kill switch state and time since the last check
+- Buy Me a Coffee link in the menu and in Settings → About
+
+### Changed
+- Settings moved to a native tabbed window (General, Kill switch, About); changes apply immediately
+- Menu reorganised: provider, ASN and timezone on one line, Copy IP / Refresh as buttons with working ⌘C / ⌘R, collapsible recent IPs
+- The About window is now a Settings tab
+- The IP no longer flickers to "…" during background refreshes
 
 ## [1.0.0] — 2026-05-17
 

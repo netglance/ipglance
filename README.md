@@ -14,6 +14,7 @@ A macOS menu bar utility that shows your current public IP, country, ASN, and ge
 - Auto-refreshes on network changes (sleep, Wi-Fi switch, VPN connect)
 - Multi-provider fallback: tries three geolocation services in order so a single outage doesn't blank the menu bar
 - Optional country kill switch: blocks outgoing traffic via pf when your IP leaves the countries you allow (asks for the admin password once)
+- Native tabbed Settings (General, Kill switch, About) that apply instantly
 - Localized: English, Russian, Polish, Ukrainian
 - Light and dark theme support
 - No telemetry, no analytics, no account
@@ -108,6 +109,8 @@ Contributions are welcome. Before opening a PR:
 3. New user-visible strings are added to `Sources/IPGlanceApp/Resources/Localizable.xcstrings` with at least an English value.
 
 Bug reports and feature requests go in [Issues](https://github.com/haric655/ipglance/issues).
+
+If IPGlance is useful to you, you can [buy me a coffee](https://buymeacoffee.com/vpotar).
 
 ## License
 
