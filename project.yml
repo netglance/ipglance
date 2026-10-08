@@ -31,9 +31,8 @@ targets:
           - Resources
       - path: Sources/IPGlanceApp/Resources
         type: folder
-    resources:
-      - Sources/IPGlanceApp/Resources
-      - SupportingFiles/AppIcon.icns
+      - path: SupportingFiles/AppIcon.icns
+        buildPhase: resources
     dependencies:
       - package: IPGlanceCore
       - package: Sparkle
