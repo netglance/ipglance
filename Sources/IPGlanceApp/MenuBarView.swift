@@ -214,7 +214,7 @@ struct MenuBarView: View {
 
     private var footerSection: some View {
         HStack {
-            Text("v 1.0.0")
+            Text(verbatim: "v \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?")")
                 .font(.system(size: 11))
                 .foregroundStyle(sub)
             Spacer()
