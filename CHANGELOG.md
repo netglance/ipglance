@@ -4,10 +4,11 @@ All notable changes to IPGlance are documented in this file. The format is based
 
 ## [Unreleased]
 
-## [1.1.0] — 2026-10-08
+## [1.1.0] - 2026-10-08
 
 ### Added
 - Country kill switch: blocks outgoing traffic via pf when the public IP's country is not in the allowed list; auto-unblocks when it is
+- The kill switch asks for the administrator password once; its system rules can be removed any time in Settings → "Remove system rules…"
 - Status line in the menu showing the kill switch state
 - Unblocking from the menu pauses the kill switch until you're back in an allowed country, so a dropped VPN can reconnect
 - Buy Me a Coffee link in the menu and in Settings → About
@@ -18,7 +19,10 @@ All notable changes to IPGlance are documented in this file. The format is based
 - The About window is now a Settings tab
 - The IP no longer flickers to "…" during background refreshes
 
-## [1.0.0] — 2026-05-17
+### Fixed
+- The menu now shows the real app version
+
+## [1.0.0] - 2026-05-17
 
 Initial public release.
 

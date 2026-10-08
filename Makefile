@@ -16,7 +16,7 @@ XCODE_FLAGS := \
 	MARKETING_VERSION=$(VERSION) \
 	CURRENT_PROJECT_VERSION=$(VERSION)
 
-.PHONY: build run stop clean test xcode dmg release-keys appcast release
+.PHONY: build run stop clean test xcode dmg release-keys notes appcast release
 
 build:
 	xcodebuild $(XCODE_FLAGS) build | grep -E "^(error:|warning:|Build succeeded|FAILED|.*\.swift.*error)"
@@ -66,11 +66,15 @@ dmg: build
 
 # ─── Sparkle release pipeline ────────────────────────────────────────────
 
-# Path to Sparkle's SPM-checkout binaries. Resolved lazily so it works after
-# the first `make build` has populated build/SourcePackages.
-SPARKLE_BIN = $(shell find $(BUILD_DIR)/SourcePackages -path '*Sparkle*/bin' -type d -print -quit)
+# Path to Sparkle's binaries (SPM binary artifact). Resolved lazily so it works
+# after the first `make build` has populated build/SourcePackages.
+SPARKLE_BIN = $(shell dirname "$$(find $(BUILD_DIR)/SourcePackages -name generate_appcast -type f -print -quit 2>/dev/null)" 2>/dev/null | grep -vx '\.')
 
-RELEASES_DIR := releases
+# ponytail: the appcast is regenerated from what is in this dir; `make clean`
+# drops older items, which is fine because Sparkle only needs the newest one.
+# Upgrade: keep the dir outside build/ or download the previous appcast.xml first.
+RELEASES_DIR := $(BUILD_DIR)/release
+NOTES := $(RELEASES_DIR)/IPGlance-$(VERSION).md
 
 # One-time: generate the EdDSA keypair. The private key is stored in macOS
 # Keychain (see Sparkle docs). The public key is printed to stdout — paste it
@@ -81,24 +85,31 @@ release-keys:
 	fi
 	"$(SPARKLE_BIN)/generate_keys"
 
-# Regenerate releases/appcast.xml from every .dmg in releases/. Sparkle
-# signs each one with the EdDSA private key from Keychain. The .html note
-# next to each dmg (e.g. releases/1.0.1.html) is embedded as release notes.
+# Extract the body of the `## [VERSION]` section of CHANGELOG.md into
+# $(NOTES), named like the DMG so generate_appcast picks it up.
+notes:
+	@mkdir -p $(RELEASES_DIR)
+	@awk -v h='## [$(VERSION)]' 'index($$0,h)==1{f=1;next} /^## \[/||/^\[[^]]*\]: /{f=0} f' CHANGELOG.md \
+		| awk 'NF{p=1} p{b[++n]=$$0} NF{l=n} END{for(i=1;i<=l;i++)print b[i]}' > $(NOTES)
+	@if [ ! -s "$(NOTES)" ]; then \
+		echo "❌ CHANGELOG.md has no (or an empty) '## [$(VERSION)]' section — write release notes first."; \
+		rm -f "$(NOTES)"; exit 1; \
+	fi
+
+# Regenerate $(RELEASES_DIR)/appcast.xml from every .dmg in it. Sparkle signs
+# each one with the EdDSA private key from Keychain. The IPGlance-X.Y.Z.md next
+# to each dmg (extracted from CHANGELOG.md) is embedded as release notes.
 appcast:
 	@if [ -z "$(SPARKLE_BIN)" ]; then \
 		echo "❌ Sparkle binaries not found. Run 'make build' first."; exit 1; \
 	fi
 	@mkdir -p $(RELEASES_DIR)
-	"$(SPARKLE_BIN)/generate_appcast" $(RELEASES_DIR)
+	"$(SPARKLE_BIN)/generate_appcast" --embed-release-notes $(RELEASES_DIR)
 
-# Cut a release: build DMG, copy it into releases/, regenerate appcast,
-# publish to GitHub Releases. Assumes the current VERSION is the one being
-# released and a matching releases/$(VERSION).html exists.
-release: dmg
-	@if [ ! -f "$(RELEASES_DIR)/$(VERSION).html" ]; then \
-		echo "❌ Missing $(RELEASES_DIR)/$(VERSION).html — write release notes first."; exit 1; \
-	fi
-	@mkdir -p $(RELEASES_DIR)
+# Cut a release: build DMG, extract notes from CHANGELOG.md, regenerate the
+# appcast, publish DMG + appcast to GitHub Releases with the same notes.
+# Assumes the current VERSION is the one being released.
+release: dmg notes
 	cp $(DMG_NAME) $(RELEASES_DIR)/IPGlance-$(VERSION).dmg
 	@$(MAKE) --no-print-directory appcast
 	gh release create v$(VERSION) \
@@ -106,5 +117,5 @@ release: dmg
 		$(RELEASES_DIR)/appcast.xml \
 		--target $(shell git rev-parse HEAD) \
 		--title "v$(VERSION)" \
-		--notes-file $(RELEASES_DIR)/$(VERSION).html
+		--notes-file $(NOTES)
 	@echo "✅ Released v$(VERSION)"
