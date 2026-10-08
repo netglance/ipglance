@@ -11,10 +11,14 @@ struct MenuBarView: View {
     private var hairline: Color { isDark ? .white.opacity(0.06) : .black.opacity(0.06) }
     private var statBg: Color { isDark ? .white.opacity(0.04) : .black.opacity(0.03) }
     private var stroke: Color { isDark ? .white.opacity(0.08) : .black.opacity(0.07) }
+    private var danger: Color { isDark ? Color(red: 1.0, green: 0.50, blue: 0.47) : Color(red: 0.70, green: 0.08, blue: 0.08) }
 
     var body: some View {
         VStack(spacing: 0) {
             heroSection
+            if viewModel.isBlocked || viewModel.killSwitchError != nil {
+                killSwitchSection
+            }
             statsSection
             Divider().opacity(0.3).padding(.horizontal, 8)
             actionsSection
@@ -90,6 +94,56 @@ struct MenuBarView: View {
             )
         }
         .background(statBg)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .padding(.horizontal, 14)
+        .padding(.bottom, 10)
+    }
+
+    // MARK: - Kill switch
+
+    private var killSwitchSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            if viewModel.isBlocked {
+                HStack(spacing: 8) {
+                    Image(systemName: "lock.fill")
+                        .foregroundStyle(danger)
+                        .accessibilityHidden(true)
+                    Text("killswitch_blocked", bundle: .module)
+                        .font(.system(size: 12.5, weight: .semibold))
+                        .foregroundStyle(danger)
+                        .lineLimit(1)
+                        .layoutPriority(1)
+                    Spacer()
+                    if let info = viewModel.countryInfo {
+                        Text(verbatim: "\(info.flagEmoji) \(info.countryName)")
+                            .font(.system(size: 12))
+                            .foregroundStyle(sub)
+                            .lineLimit(1)
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .accessibilityElement(children: .combine)
+                ActionRow(icon: "lock.open", label: "killswitch_unblock", hint: "", isDark: isDark) {
+                    Task { await viewModel.manualUnblock() }
+                }
+            }
+            if let error = viewModel.killSwitchError {
+                HStack(alignment: .top, spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(danger)
+                        .accessibilityHidden(true)
+                    Text(verbatim: error)
+                        .font(.system(size: 11))
+                        .foregroundStyle(danger)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+            }
+        }
+        .padding(.vertical, 4)
+        .background(danger.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .padding(.horizontal, 14)
         .padding(.bottom, 10)

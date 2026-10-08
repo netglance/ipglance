@@ -7,12 +7,14 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var draft: SettingsDraft = .init()
+    @State private var rulesInstalled = KillSwitch.isInstalled
 
     private var isDark: Bool { colorScheme == .dark }
     private var bg: Color { isDark ? Color(red: 31/255, green: 32/255, blue: 36/255) : Color(red: 244/255, green: 245/255, blue: 247/255) }
     private var panel: Color { isDark ? Color(red: 38/255, green: 40/255, blue: 45/255) : .white }
     private var sub: Color { isDark ? .white.opacity(0.55) : .black.opacity(0.5) }
     private var stroke: Color { isDark ? .white.opacity(0.07) : .black.opacity(0.07) }
+    private var danger: Color { isDark ? Color(red: 1.0, green: 0.50, blue: 0.47) : Color(red: 0.70, green: 0.08, blue: 0.08) }
     private var footerBg: Color { isDark ? Color(red: 35/255, green: 37/255, blue: 42/255) : Color(red: 238/255, green: 240/255, blue: 243/255) }
 
     var body: some View {
@@ -29,6 +31,7 @@ struct SettingsView: View {
         .onAppear {
             viewModel.settings.refreshAutostartFromSystem()
             draft = SettingsDraft(from: viewModel.settings)
+            rulesInstalled = KillSwitch.isInstalled
         }
     }
 
@@ -40,18 +43,22 @@ struct SettingsView: View {
             SettingsSection(title: "section_launch", panel: panel, stroke: stroke, isDark: isDark) {
                 SettingsField(label: "autostart_label", hint: "autostart_hint", isDark: isDark, sub: sub) {
                     SettingsToggle(isOn: $draft.autostartEnabled, isDark: isDark)
+                        .accessibilityLabel(Text("autostart_label", bundle: .module))
                 }
                 SettingsDivider(isDark: isDark)
                 SettingsField(label: "show_flag", isDark: isDark, sub: sub) {
                     SettingsToggle(isOn: $draft.showFlag, isDark: isDark)
+                        .accessibilityLabel(Text("show_flag", bundle: .module))
                 }
                 SettingsDivider(isDark: isDark)
                 SettingsField(label: "show_country", isDark: isDark, sub: sub) {
                     SettingsToggle(isOn: $draft.showCountry, isDark: isDark)
+                        .accessibilityLabel(Text("show_country", bundle: .module))
                 }
                 SettingsDivider(isDark: isDark)
                 SettingsField(label: "show_ip", isDark: isDark, sub: sub) {
                     SettingsToggle(isOn: $draft.showIP, isDark: isDark)
+                        .accessibilityLabel(Text("show_ip", bundle: .module))
                 }
 
                 // Live preview
@@ -90,9 +97,138 @@ struct SettingsView: View {
                 .padding(.bottom, 4)
             }
 
+            SettingsSection(title: "section_killswitch", panel: panel, stroke: stroke, isDark: isDark) {
+                SettingsField(label: "killswitch_label", hint: "killswitch_hint", isDark: isDark, sub: sub) {
+                    SettingsToggle(isOn: $draft.killSwitchEnabled, isDark: isDark)
+                        .disabled(draft.allowedCountries.isEmpty)
+                        .accessibilityLabel(Text("killswitch_label", bundle: .module))
+                }
+                SettingsDivider(isDark: isDark)
+                SettingsField(label: "killswitch_allowed", isDark: isDark, sub: sub) {
+                    HStack(spacing: 8) {
+                        Button {
+                            addCountry(currentCode)
+                        } label: {
+                            Text("killswitch_add_current", bundle: .module)
+                        }
+                        .controlSize(.small)
+                        .disabled(currentCode == nil || draft.allowedCountries.contains(currentCode!))
+                        Menu {
+                            ForEach(Self.allRegions.filter { !draft.allowedCountries.contains($0) }, id: \.self) { code in
+                                Button {
+                                    addCountry(code)
+                                } label: {
+                                    Text(verbatim: "\(Self.flag(code)) \(Self.regionName(code))")
+                                }
+                            }
+                        } label: {
+                            Text("killswitch_add", bundle: .module)
+                        }
+                        .controlSize(.small)
+                        .fixedSize()
+                    }
+                }
+                if draft.allowedCountries.isEmpty {
+                    Text("killswitch_empty", bundle: .module)
+                        .font(.system(size: 12))
+                        .foregroundStyle(sub)
+                        .padding(.horizontal, 14)
+                        .padding(.bottom, 10)
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(draft.allowedCountries, id: \.self) { code in
+                            let removeLabel = String(format: String(localized: "killswitch_remove_country", bundle: .module), Self.regionName(code))
+                            HStack(spacing: 8) {
+                                Text(verbatim: Self.flag(code))
+                                    .accessibilityHidden(true)
+                                Text(verbatim: Self.regionName(code))
+                                    .font(.system(size: 13))
+                                Text(verbatim: code)
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundStyle(sub)
+                                    .accessibilityHidden(true)
+                                Spacer()
+                                Button {
+                                    removeCountry(code)
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 15))
+                                        .frame(minWidth: 22, minHeight: 22)
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(sub)
+                                .accessibilityLabel(Text(verbatim: removeLabel))
+                                .help(removeLabel)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 5)
+                        }
+                    }
+                    .padding(.bottom, 5)
+                }
+                if rulesInstalled {
+                    SettingsDivider(isDark: isDark)
+                    HStack {
+                        Spacer()
+                        Button {
+                            draft.killSwitchEnabled = false
+                            Task {
+                                await viewModel.uninstallKillSwitch()
+                                rulesInstalled = KillSwitch.isInstalled
+                            }
+                        } label: {
+                            Text("killswitch_uninstall", bundle: .module)
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                }
+                if let error = viewModel.killSwitchError {
+                    Text(verbatim: error)
+                        .font(.system(size: 11))
+                        .foregroundStyle(danger)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 14)
+                        .padding(.bottom, 10)
+                }
+            }
+
         }
         .padding(26)
         .padding(.top, 2)
+    }
+
+    // MARK: - Kill switch helpers
+
+    private var currentCode: String? {
+        guard let code = viewModel.countryInfo?.countryCode.uppercased(), code.count == 2 else { return nil }
+        return code
+    }
+
+    private func addCountry(_ code: String?) {
+        guard let code = code?.uppercased(), code.count == 2, !draft.allowedCountries.contains(code) else { return }
+        draft.allowedCountries.append(code)
+    }
+
+    private func removeCountry(_ code: String) {
+        draft.allowedCountries.removeAll { $0 == code }
+        // An empty list never blocks, so don't leave a toggle that does nothing.
+        if draft.allowedCountries.isEmpty { draft.killSwitchEnabled = false }
+    }
+
+    private static let allRegions: [String] = Locale.Region.isoRegions
+        .map(\.identifier)
+        .filter { $0.count == 2 && $0.allSatisfy(\.isLetter) && Locale.current.localizedString(forRegionCode: $0) != nil }
+        .sorted { regionName($0).localizedCompare(regionName($1)) == .orderedAscending }
+
+    private static func regionName(_ code: String) -> String {
+        Locale.current.localizedString(forRegionCode: code) ?? code
+    }
+
+    // Reuses CountryInfo's regional-indicator math instead of duplicating it.
+    private static func flag(_ code: String) -> String {
+        CountryInfo(ip: "", countryCode: code, countryName: "").flagEmoji
     }
 
     // MARK: - Footer
@@ -123,6 +259,8 @@ struct SettingsView: View {
 
             Button {
                 draft.apply(to: viewModel.settings)
+                let killSwitchEnabled = draft.killSwitchEnabled
+                Task { await viewModel.setKillSwitch(enabled: killSwitchEnabled) }
                 dismiss()
             } label: {
                 Text("save", bundle: .module)
@@ -155,6 +293,8 @@ struct SettingsDraft {
     var showCountry: Bool = true
     var showIP: Bool = false
     var autostartEnabled: Bool = false
+    var killSwitchEnabled: Bool = false
+    var allowedCountries: [String] = []
 
     init() {}
 
@@ -164,6 +304,8 @@ struct SettingsDraft {
         showCountry = s.showCountry
         showIP = s.showIP
         autostartEnabled = s.autostartEnabled
+        killSwitchEnabled = s.killSwitchEnabled
+        allowedCountries = s.allowedCountries
     }
 
     @MainActor
@@ -172,6 +314,8 @@ struct SettingsDraft {
         s.showCountry = showCountry
         s.showIP = showIP
         s.autostartEnabled = autostartEnabled
+        // Toggle is applied via setKillSwitch (async: may need a password and roll back).
+        s.allowedCountries = allowedCountries
     }
 }
 
@@ -240,6 +384,7 @@ struct SettingsDivider: View {
 struct SettingsToggle: View {
     @Binding var isOn: Bool
     let isDark: Bool
+    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
         ZStack(alignment: isOn ? .trailing : .leading) {
@@ -254,7 +399,17 @@ struct SettingsToggle: View {
                 .padding(1.5)
         }
         .animation(.spring(response: 0.18), value: isOn)
-        .onTapGesture { isOn.toggle() }
+        .opacity(isEnabled ? 1 : 0.4)
+        .onTapGesture { if isEnabled { isOn.toggle() } }
+        .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(.isToggle)
+        .accessibilityValue(Text(isOn ? "toggle_on" : "toggle_off", bundle: .module))
+        .accessibilityAction { if isEnabled { isOn.toggle() } }
+        .focusable()
+        .onKeyPress(.space) {
+            if isEnabled { isOn.toggle() }
+            return .handled
+        }
     }
 }
 
