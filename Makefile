@@ -111,9 +111,10 @@ appcast:
 		--download-url-prefix $(REPO_URL)/releases/download/v$(VERSION)/ \
 		$(if $(SPARKLE_KEY_FILE),--ed-key-file $(SPARKLE_KEY_FILE)) $(RELEASES_DIR)
 
-# Used by CI (.github/workflows/release.yml): DMG + notes + signed appcast +
-# checksums, all in $(RELEASES_DIR).
-release-assets: dmg notes
+# CI: run `make dmg` first in a step without secrets; this target only copies,
+# signs and checksums (all output in $(RELEASES_DIR)).
+release-assets: notes
+	@test -f $(DMG_NAME) || { echo "❌ $(DMG_NAME) not found: run make dmg first."; exit 1; }
 	cp $(DMG_NAME) $(RELEASES_DIR)/
 	@$(MAKE) --no-print-directory appcast
 	cd $(RELEASES_DIR) && shasum -a 256 $(DMG_NAME) > SHA256SUMS
