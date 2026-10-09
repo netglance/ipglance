@@ -1,7 +1,7 @@
 # Release: update VERSION + CHANGELOG.md, then run `make release` (pushes tag vX.Y.Z from main).
 # The tag triggers this workflow: `build` makes the DMG with no secrets; `publish` (clean runner,
 # no repo code, pinned Sparkle tools) signs the appcast, checksums it and creates the GitHub Release.
-# One-time: set repo secret SPARKLE_ED_PRIVATE_KEY (output of `generate_keys -x`).
+# One-time: set environment secret SPARKLE_ED_PRIVATE_KEY in the `release` environment (output of `generate_keys -x`).
 name: Release
 
 on:
@@ -50,6 +50,7 @@ jobs:
   # Never checks out or runs repo code: the only executables are the checksum-pinned Sparkle tools.
   publish:
     needs: build
+    environment: release
     runs-on: macos-14
     permissions:
       contents: write  # needed to create GitHub Releases

@@ -4,6 +4,14 @@ All notable changes to IPGlance are documented in this file. The format is based
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-09
+
+### Fixed
+- The interface showed untranslated keys in 1.1.0 builds; string catalogs are now compiled into the app
+- The widget was not loaded by macOS; it is now sandboxed and signed with its entitlements
+- The widget showed Russian text in every language; it is now localized in English, Russian, Polish and Ukrainian
+- `make build` no longer reports success when compilation fails
+
 ## [1.1.0] - 2026-10-08
 
 ### Added
@@ -22,7 +30,7 @@ All notable changes to IPGlance are documented in this file. The format is based
 ### Fixed
 - The menu now shows the real app version
 
-## [1.0.0] - 2026-05-17
+## 1.0.0 - 2026-05-17
 
 Initial public release.
 
@@ -35,8 +43,7 @@ Initial public release.
 - Settings window: refresh interval, theme override, "launch at login"
 - Localization for English, Russian, Polish, Ukrainian
 - Light and dark theme support
-- LaunchAgent install script (`make install`)
 
-[Unreleased]: https://github.com/netglance/ipglance/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/netglance/ipglance/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/netglance/ipglance/releases/tag/v1.1.1
 [1.1.0]: https://github.com/netglance/ipglance/releases/tag/v1.1.0
-[1.0.0]: https://github.com/netglance/ipglance/releases/tag/v1.0.0

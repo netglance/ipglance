@@ -20,7 +20,7 @@ XCODE_FLAGS := \
 .PHONY: build run stop clean test xcode dmg release-keys notes appcast release
 
 build:
-	xcodebuild $(XCODE_FLAGS) build | grep -E "^(error:|warning:|Build succeeded|FAILED|.*\.swift.*error)"
+	xcodebuild $(XCODE_FLAGS) -quiet build
 
 run: build
 	@pkill -9 -x IPGlanceApp 2>/dev/null; sleep 0.5; true
@@ -47,8 +47,10 @@ dmg: build
 	@echo "📦 Building $(DMG_NAME)…"
 	@rm -f "$(DMG_NAME)"
 	@rm -rf "$(DMG_TMP)" && mkdir -p "$(DMG_TMP)"
-	# ponytail: ad-hoc signature (no entitlements, as before) so Sparkle's generate_appcast accepts the app; replace with Developer ID signing + notarization when available.
-	@codesign --force --deep --sign - "$(APP)"
+	# ponytail: ad-hoc signing, inside-out, with entitlements: macOS (pkd) only loads the widget if it is sandboxed and signed with them. Upgrade: Developer ID + notarization. App Group container sharing between ad-hoc-signed processes may not be honoured on newer macOS; the widget then falls back to its own network fetch.
+	@codesign -f -s - --deep "$(APP)/Contents/Frameworks/Sparkle.framework"
+	@codesign -f -s - --entitlements SupportingFiles/IPGlanceWidget.entitlements "$(APP)/Contents/PlugIns/IPGlanceWidget.appex"
+	@codesign -f -s - --entitlements SupportingFiles/IPGlanceApp.entitlements "$(APP)"
 	@codesign --verify --deep --strict "$(APP)"
 	@ditto "$(APP)" "$(DMG_TMP)/IPGlance.app"
 	@cp SupportingFiles/AppIcon.icns "$(DMG_TMP)/.VolumeIcon.icns" 2>/dev/null || true
