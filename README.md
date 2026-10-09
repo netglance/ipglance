@@ -17,7 +17,7 @@ A macOS menu bar utility that shows your current public IP, country, ASN, and ge
 - Native tabbed Settings (General, Kill switch, About) that apply instantly
 - Localized: English, Russian, Polish, Ukrainian
 - Light and dark theme support
-- No telemetry, no analytics, no account
+- No telemetry, no analytics, no account (only a daily update check, see Privacy)
 
 ## Installation
 
@@ -76,7 +76,7 @@ IPGlance needs to know your public IP, and to do that it has to ask a server abo
 
 Each of these services will see your IP address (they have to — that's how the lookup works) and is governed by its own privacy policy.
 
-The app makes no other network requests, stores no logs, and has no analytics, telemetry, or crash reporting. Cached results live only in your local user defaults (App Group `group.com.ipglance.app`).
+Besides the lookups above, the only other network request is the update check: once a day the app fetches `https://github.com/netglance/ipglance/releases/latest/download/appcast.xml` (via Sparkle), so GitHub sees your IP address. You can turn it off in Settings → About ("Check automatically"). IPGlance stores no logs, and has no analytics, telemetry, or crash reporting. Cached results live only in your local user defaults (App Group `group.com.ipglance.app`).
 
 ## Architecture
 
@@ -86,7 +86,7 @@ Three Swift modules:
 - **`IPGlanceApp`** — the `.app` target. SwiftUI `MenuBarExtra` and Settings / About windows.
 - **`IPGlanceWidget`** — WidgetKit extension embedded in the app. Reads cached data from the App Group.
 
-The Xcode project is generated from `project.yml` by XcodeGen and is gitignored. See [`CLAUDE.md`](CLAUDE.md) for the detailed contributor-facing architecture notes.
+The Xcode project is generated from `project.yml` by XcodeGen and is gitignored.
 
 ## Acknowledgments
 
