@@ -20,7 +20,7 @@ XCODE_FLAGS := \
 .PHONY: build run stop clean test xcode dmg release-keys notes appcast release
 
 build:
-	xcodebuild $(XCODE_FLAGS) build | grep -E "^(error:|warning:|Build succeeded|FAILED|.*\.swift.*error)"
+	xcodebuild $(XCODE_FLAGS) -quiet build
 
 run: build
 	@pkill -9 -x IPGlanceApp 2>/dev/null; sleep 0.5; true
