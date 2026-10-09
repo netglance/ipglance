@@ -9,9 +9,12 @@ public enum KillSwitchConfig {
     public static let sudoersPath = "/etc/sudoers.d/ipglance"
     public static let pfctl = "/sbin/pfctl"
 
+    /// Bump when `rules` changes: installed rules without this exact header are treated as stale.
+    public static let rulesHeader = "# IPGlance kill switch rules v2 — managed by IPGlance, do not edit"
+
     // Hosts must match the provider URLs in Providers/.
     public static let rules = """
-    # IPGlance kill switch — managed by IPGlance, do not edit
+    \(rulesHeader)
     pass quick on lo0 all no state
     pass out quick inet to { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16, 224.0.0.0/4, 255.255.255.255 } no state
     pass out quick inet6 to { fe80::/10, ff00::/8, fc00::/7 } no state
@@ -28,7 +31,7 @@ public enum KillSwitchConfig {
     public static let statusArgs = ["-a", anchor, "-s", "rules"]
 
     public static func isValidUserName(_ user: String) -> Bool {
-        user.range(of: #"\A[a-z_][a-z0-9_.-]*\z"#, options: .regularExpression) != nil
+        user.range(of: #"\A[A-Za-z0-9_][A-Za-z0-9_.-]*\z"#, options: .regularExpression) != nil
     }
 
     /// `nil` if the user name is not safe to put into sudoers.
@@ -48,13 +51,13 @@ public enum KillSwitchConfig {
         let sudoers64 = Data(sudoers.utf8).base64EncodedString()
         return [
             "T=$(/usr/bin/mktemp -d /tmp/ipglance.XXXXXX)",
+            "trap '/bin/rm -rf $T' EXIT",
             "echo \(rules64) | /usr/bin/base64 -D > $T/rules",
             "echo \(sudoers64) | /usr/bin/base64 -D > $T/sudoers",
             "/usr/sbin/visudo -cf $T/sudoers",
             "/usr/bin/install -m 644 -o root -g wheel $T/rules \(rulesPath)",
             "/usr/bin/install -m 440 -o root -g wheel $T/sudoers \(sudoersPath)",
-            "/bin/rm -rf $T",
-        ].joined(separator: " && ")
+        ].joined(separator: " && ")  // stops at the first failure; the trap removes $T either way
     }
 
     public static let uninstallScript =

@@ -135,9 +135,9 @@ final class IPViewModel {
 
     func uninstallKillSwitch() async {
         isKillSwitchPaused = false
-        settings.killSwitchEnabled = false
         do {
             try await KillSwitch.uninstall()
+            settings.killSwitchEnabled = false
             isBlocked = false
             killSwitchError = nil
         } catch {

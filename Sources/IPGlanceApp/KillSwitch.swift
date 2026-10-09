@@ -1,5 +1,8 @@
 import Foundation
 import IPGlanceCore
+import os
+
+private let logger = Logger(subsystem: "com.ipglance.app", category: "killswitch")
 
 enum KillSwitchError: LocalizedError {
     case cancelled
@@ -9,8 +12,8 @@ enum KillSwitchError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .cancelled: return nil
-        case .invalidUser: return "Unsupported user name for sudoers"
-        case .commandFailed(let message): return message
+        case .invalidUser: return String(localized: "killswitch_error_user", bundle: .module)
+        case .commandFailed: return String(localized: "killswitch_error_generic", bundle: .module)
         }
     }
 }
@@ -19,9 +22,11 @@ enum KillSwitchError: LocalizedError {
 /// `install()` asks for the admin password once; block/unblock then go through `sudo -n`.
 enum KillSwitch {
     static var isInstalled: Bool {
-        let fm = FileManager.default
-        return fm.fileExists(atPath: KillSwitchConfig.rulesPath)
-            && fm.fileExists(atPath: KillSwitchConfig.sudoersPath)
+        // Rules from an older app version lack the current header: treat as missing so enable reinstalls them.
+        guard FileManager.default.fileExists(atPath: KillSwitchConfig.sudoersPath),
+              let rules = try? String(contentsOfFile: KillSwitchConfig.rulesPath, encoding: .utf8)
+        else { return false }
+        return rules.hasPrefix(KillSwitchConfig.rulesHeader + "\n")
     }
 
     static func install() async throws {
@@ -46,7 +51,8 @@ enum KillSwitch {
 
     /// `false` when rules are not installed or sudo fails.
     static func isBlocked() async -> Bool {
-        guard isInstalled else { return false }
+        // Not `isInstalled`: rules from an older version may still be blocking.
+        guard FileManager.default.fileExists(atPath: KillSwitchConfig.sudoersPath) else { return false }
         let output = (try? await sudo(KillSwitchConfig.statusArgs)) ?? ""
         return !output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
@@ -84,7 +90,9 @@ enum KillSwitch {
             let errData = err.fileHandleForReading.readDataToEndOfFile()
             process.waitUntilExit()
             guard process.terminationStatus == 0 else {
-                throw KillSwitchError.commandFailed(String(decoding: errData, as: UTF8.self))
+                let message = String(decoding: errData, as: UTF8.self)
+                logger.error("\(path, privacy: .public) failed: \(message, privacy: .public)")
+                throw KillSwitchError.commandFailed(message)
             }
             return String(decoding: outData, as: UTF8.self)
         }.value
