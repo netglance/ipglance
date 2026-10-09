@@ -31,7 +31,9 @@ public enum KillSwitchConfig {
     public static let statusArgs = ["-a", anchor, "-s", "rules"]
 
     public static func isValidUserName(_ user: String) -> Bool {
+        // All-caps words are sudoers aliases (`ALL` would grant every user): reject them.
         user.range(of: #"\A[A-Za-z0-9_][A-Za-z0-9_.-]*\z"#, options: .regularExpression) != nil
+            && user.range(of: #"\A[A-Z][A-Z0-9_]*\z"#, options: .regularExpression) == nil
     }
 
     /// `nil` if the user name is not safe to put into sudoers.

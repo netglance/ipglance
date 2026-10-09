@@ -7,11 +7,12 @@ final class KillSwitchConfigTests: XCTestCase {
         XCTAssertTrue(KillSwitchConfig.isValidUserName("_test.user-1"))
         XCTAssertTrue(KillSwitchConfig.isValidUserName("Vlad"))
         XCTAssertTrue(KillSwitchConfig.isValidUserName("1user"))
+        XCTAssertTrue(KillSwitchConfig.isValidUserName("john.doe"))
         XCTAssertNotNil(KillSwitchConfig.sudoers(user: "Vlad"))
     }
 
     func testRejectsUnsafeUserNames() {
-        for name in ["", "bob; rm -rf /", "bob ALL", "bob\nroot", "bob\n", "bob,root", "bob#", "bob:x", "bob=x", "bob\\x"] {
+        for name in ["", "ALL", "ADMIN", "A1_B", "bob; rm -rf /", "bob ALL", "bob\nroot", "bob\n", "bob,root", "bob#", "bob:x", "bob=x", "bob\\x"] {
             XCTAssertFalse(KillSwitchConfig.isValidUserName(name), name)
             XCTAssertNil(KillSwitchConfig.sudoers(user: name), name)
             XCTAssertNil(KillSwitchConfig.installScript(user: name), name)
