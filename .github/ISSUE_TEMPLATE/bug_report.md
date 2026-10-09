@@ -22,7 +22,9 @@ labels: bug
 
 - IPGlance version:
 - macOS version:
-- Mac model (Intel / Apple Silicon):
+- Mac (Apple silicon / Intel):
+- Kill switch enabled? (yes/no, allowed countries):
+- VPN in use? (yes/no, which):
 - Network: <!-- e.g. home Wi-Fi, corporate VPN, hotspot -->
 
 ## Logs / screenshots

@@ -6,7 +6,8 @@
 
 - [ ] `make test` passes
 - [ ] `make build` succeeds in Release configuration
-- [ ] New user-visible strings added to `Localizable.xcstrings` (at minimum with an English value)
+- [ ] CHANGELOG.md updated under [Unreleased] (user-visible changes)
+- [ ] New strings localized (en/ru/pl/uk)
 - [ ] No new third-party network endpoints added without updating the Privacy section of README
 
 ## Screenshots / recordings
