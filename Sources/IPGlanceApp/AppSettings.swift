@@ -1,5 +1,6 @@
 import Foundation
 import ServiceManagement
+import os
 
 @Observable
 @MainActor
@@ -71,7 +72,8 @@ final class AppSettings {
                 try service.unregister()
             }
         } catch {
-            print("IPGlance: SMAppService \(enabled ? "register" : "unregister") failed: \(error.localizedDescription)")
+            Logger(subsystem: "com.ipglance.app", category: "settings")
+                .error("SMAppService \(enabled ? "register" : "unregister") failed: \(error.localizedDescription, privacy: .public)")
             let actual = Self.systemAutostartIsActive()
             if actual != autostartEnabled {
                 isSyncingAutostart = true

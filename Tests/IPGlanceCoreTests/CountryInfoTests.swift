@@ -22,6 +22,19 @@ final class CountryInfoTests: XCTestCase {
         XCTAssertEqual(info.flagEmoji, "🇬🇧")
     }
 
+    func testFlagEmojiFallsBackToGlobe() {
+        for code in ["", "U", "12", "U1", "USA", "é"] {
+            XCTAssertEqual(CountryInfo(ip: "1.1.1.1", countryCode: code, countryName: "").flagEmoji, "🌐", code)
+        }
+    }
+
+    func testShortTimezone() {
+        func tz(_ s: String) -> String { CountryInfo(ip: "", countryCode: "US", countryName: "", timezone: s).shortTimezone }
+        XCTAssertEqual(tz("America/New_York"), "New York")
+        XCTAssertEqual(tz("UTC"), "UTC")
+        XCTAssertEqual(tz(""), "—")
+    }
+
     func testNewFieldsDefault() {
         let info = CountryInfo(ip: "1.1.1.1", countryCode: "AU", countryName: "Australia")
         XCTAssertEqual(info.city, "")
