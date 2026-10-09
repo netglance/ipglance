@@ -4,11 +4,12 @@ APP       := $(BUILD_DIR)/Build/Products/Release/IPGlanceApp.app
 VERSION   := $(shell cat VERSION)
 REPO_URL  := https://github.com/netglance/ipglance
 DMG_NAME  := IPGlance-$(VERSION).dmg
-DMG_TMP   := /tmp/dmg-staging
+DMG_TMP   := $(BUILD_DIR)/dmg-staging
 
 XCODE_FLAGS := \
 	-project IPGlanceApp.xcodeproj \
 	-scheme "$(SCHEME)" \
+	-destination 'generic/platform=macOS' \
 	-configuration Release \
 	-derivedDataPath $(BUILD_DIR) \
 	CODE_SIGN_IDENTITY="" \
@@ -122,6 +123,7 @@ appcast:
 release: notes
 	@git diff --quiet && git diff --cached --quiet || { echo "❌ Working tree is not clean."; exit 1; }
 	@[ "$$(git rev-parse --abbrev-ref HEAD)" = main ] || { echo "❌ Not on main."; exit 1; }
+	@git fetch -q origin main && [ "$$(git rev-parse HEAD)" = "$$(git rev-parse origin/main)" ] || { echo "❌ Local HEAD is not origin/main (push or pull first)."; exit 1; }
 	@! git rev-parse -q --verify refs/tags/v$(VERSION) >/dev/null || { echo "❌ Tag v$(VERSION) exists locally."; exit 1; }
 	@[ -z "$$(git ls-remote --tags origin refs/tags/v$(VERSION))" ] || { echo "❌ Tag v$(VERSION) exists on origin."; exit 1; }
 	git tag -a v$(VERSION) -m "v$(VERSION)"
