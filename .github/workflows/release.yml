@@ -88,12 +88,25 @@ jobs:
       - name: Require green CI for the tagged commit
         env:
           GH_TOKEN: ${{ github.token }}
+          WAIT_SECONDS: "720"
         run: |
-          gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100" > "$RUNNER_TEMP/checks.json"
-          jq -e '[.check_runs[]] as $r
-            | ["swift test","xcodebuild release","gitleaks (secret scan)"]
-            | all(. as $n | ($r | map(select(.name==$n)) | sort_by(.started_at) | last | .conclusion) == "success")' \
-            "$RUNNER_TEMP/checks.json" >/dev/null || { echo "::error::required CI checks are not all green for $GITHUB_SHA"; exit 1; }
+          # state: ok = all three latest runs succeeded, bad = one completed unsuccessfully, wait = otherwise
+          deadline=$((SECONDS + WAIT_SECONDS))
+          while :; do
+            state=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100" | jq -r '
+              [.check_runs[]] as $r
+              | [["swift test","xcodebuild release","gitleaks (secret scan)"][]
+                 | . as $n | ($r | map(select(.name==$n)) | sort_by(.started_at) | last) // {}] as $l
+              | if all($l[]; .status=="completed" and .conclusion=="success") then "ok"
+                elif any($l[]; .status=="completed" and .conclusion!="success") then "bad"
+                else "wait" end')
+            case "$state" in
+              ok) exit 0;;
+              bad) echo "::error::a required CI check failed for $GITHUB_SHA"; exit 1;;
+            esac
+            [ "$SECONDS" -lt "$deadline" ] || { echo "::error::required CI checks did not finish green within ${WAIT_SECONDS}s for $GITHUB_SHA"; exit 1; }
+            echo "CI still running, retrying in 30s"; sleep 30
+          done
 
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
