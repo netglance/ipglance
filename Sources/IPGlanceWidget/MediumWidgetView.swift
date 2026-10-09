@@ -3,7 +3,6 @@ import IPGlanceCore
 
 struct MediumWidgetView: View {
     let entry: IPGlanceEntry
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         ZStack {
@@ -35,7 +34,7 @@ struct MediumWidgetView: View {
                             .minimumScaleFactor(0.7)
                         statRow(label: "ISP", value: firstWord(info.isp))
                         statRow(label: "ASN", value: info.asn.isEmpty ? "—" : info.asn, mono: true)
-                        statRow(label: "TZ", value: shortTZ(info.timezone))
+                        statRow(label: "TZ", value: info.shortTimezone)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -49,7 +48,7 @@ struct MediumWidgetView: View {
     private func statRow(label: String, value: String, mono: Bool = false) -> some View {
         HStack(spacing: 4) {
             Text(label)
-                .font(.system(size: 9, weight: .semibold))
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .textCase(.uppercase)
             Text(value)
@@ -58,10 +57,12 @@ struct MediumWidgetView: View {
         }
     }
 
-    private var updatedLabel: some View {
-        Text(entry.date, style: .relative)
-            .font(.system(size: 9))
-            .foregroundStyle(.tertiary)
+    @ViewBuilder private var updatedLabel: some View {
+        if let fetchedAt = entry.fetchedAt {
+            Text(fetchedAt, style: .relative)
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+        }
     }
 
     private var placeholder: some View {
@@ -73,11 +74,5 @@ struct MediumWidgetView: View {
 
     private func firstWord(_ s: String) -> String {
         s.split(separator: " ").first.map(String.init) ?? s
-    }
-
-    private func shortTZ(_ tz: String) -> String {
-        guard !tz.isEmpty else { return "—" }
-        return tz.split(separator: "/").last
-            .map { $0.replacingOccurrences(of: "_", with: " ") } ?? tz
     }
 }

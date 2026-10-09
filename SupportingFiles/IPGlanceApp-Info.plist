@@ -25,6 +25,10 @@
         <string>pl</string>
         <string>uk</string>
     </array>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>© 2026 Vlad P</string>
     <key>LSUIElement</key>
     <true/>
     <key>NSPrincipalClass</key>

@@ -59,7 +59,7 @@ struct MenuBarView: View {
                         Text(info.city.isEmpty ? info.countryName : "\(info.countryName) · \(info.city)")
                             .font(.system(size: 12.5))
                             .foregroundStyle(.secondary)
-                        let details = [info.isp, info.asn, shortTZ(info.timezone)]
+                        let details = [info.isp, info.asn, info.shortTimezone]
                             .filter { !$0.isEmpty && $0 != "—" }
                             .joined(separator: " · ")
                         if !details.isEmpty {
@@ -311,13 +311,6 @@ struct MenuBarView: View {
         .padding(.vertical, 8)
     }
 
-    // MARK: - Helpers
-
-    private func shortTZ(_ tz: String) -> String {
-        guard !tz.isEmpty else { return "—" }
-        return tz.split(separator: "/").last
-            .map { $0.replacingOccurrences(of: "_", with: " ") } ?? tz
-    }
 }
 
 // MARK: - Sub-components

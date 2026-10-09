@@ -1429,6 +1429,62 @@
           }
         }
       }
+    },
+    "killswitch_error_user": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your macOS account name can't be used for the kill switch rules."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Имя вашей учётной записи macOS нельзя использовать в правилах kill switch."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nazwy Twojego konta macOS nie można użyć w regułach kill switch."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ім’я вашого облікового запису macOS не можна використати в правилах kill switch."
+          }
+        }
+      }
+    },
+    "killswitch_error_generic": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The kill switch command failed. Try again, or turn the kill switch off and on."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Команда kill switch не выполнилась. Повторите попытку или выключите и снова включите kill switch."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Polecenie kill switch nie powiodło się. Spróbuj ponownie lub wyłącz i włącz kill switch."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Команда kill switch не виконалась. Повторіть спробу або вимкніть і знову ввімкніть kill switch."
+          }
+        }
+      }
     }
   }
 }

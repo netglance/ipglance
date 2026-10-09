@@ -4,6 +4,16 @@ All notable changes to IPGlance are documented in this file. The format is based
 
 ## [Unreleased]
 
+### Fixed
+- Kill switch errors are now localized
+- macOS account names with capital letters or digits are accepted by the kill switch
+- Kill switch rules are reinstalled when an update changes them
+- Cancelling "Remove system rules…" no longer turns the kill switch off
+- The widget's "updated" time reflects when the IP was fetched
+
+### Changed
+- Widget legibility tweaks: larger, higher-contrast secondary text
+
 ## [1.1.1] - 2026-10-09
 
 ### Fixed

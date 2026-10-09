@@ -46,6 +46,10 @@ final class IPViewModel {
         Task {
             // The block outlives the app, so read the real pf state first.
             self.isBlocked = await KillSwitch.isBlocked()
+            // Missing or outdated rules: ask the user to re-enable (no admin prompt at launch).
+            if settings.killSwitchEnabled && !KillSwitch.isInstalled {
+                self.killSwitchError = String(localized: "killswitch_reinstall_hint", bundle: .module)
+            }
             await self.refresh()
         }
         startNetworkMonitoring()
@@ -135,9 +139,9 @@ final class IPViewModel {
 
     func uninstallKillSwitch() async {
         isKillSwitchPaused = false
-        settings.killSwitchEnabled = false
         do {
             try await KillSwitch.uninstall()
+            settings.killSwitchEnabled = false
             isBlocked = false
             killSwitchError = nil
         } catch {

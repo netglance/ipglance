@@ -45,15 +45,18 @@ struct LargeWidgetView: View {
                     Spacer()
 
                     // Footer
-                    HStack {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 9))
-                            .foregroundStyle(.tertiary)
-                        Text(entry.date, style: .relative)
-                            .font(.system(size: 10))
-                            .foregroundStyle(.tertiary)
+                    if let fetchedAt = entry.fetchedAt {
+                        HStack {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.secondary)
+                                .accessibilityHidden(true)
+                            Text(fetchedAt, style: .relative)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.top, 8)
                     }
-                    .padding(.top, 8)
                 }
                 .padding(16)
             } else {

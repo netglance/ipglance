@@ -3,7 +3,6 @@ import IPGlanceCore
 
 struct SmallWidgetView: View {
     let entry: IPGlanceEntry
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         ZStack {

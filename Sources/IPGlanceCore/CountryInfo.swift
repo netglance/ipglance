@@ -24,8 +24,15 @@ public struct CountryInfo: Sendable, Codable {
     }
 
     public var flagEmoji: String {
-        countryCode.unicodeScalars.compactMap { scalar in
-            Unicode.Scalar(127397 + scalar.value).map { String($0) }
-        }.joined()
+        let scalars = countryCode.unicodeScalars
+        guard scalars.count == 2, scalars.allSatisfy({ ("A"..."Z").contains($0) }) else { return "🌐" }
+        return scalars.compactMap { Unicode.Scalar(127397 + $0.value).map { String($0) } }.joined()
+    }
+
+    /// "Europe/New_York" → "New York"; "—" when unknown.
+    public var shortTimezone: String {
+        guard !timezone.isEmpty else { return "—" }
+        return timezone.split(separator: "/").last
+            .map { $0.replacingOccurrences(of: "_", with: " ") } ?? timezone
     }
 }

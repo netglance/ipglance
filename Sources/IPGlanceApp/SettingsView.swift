@@ -111,7 +111,7 @@ private struct KillSwitchTab: View {
                 }
                 HStack(spacing: 8) {
                     Button { addCountry(currentCode) } label: { Text("killswitch_add_current", bundle: .module) }
-                        .disabled(currentCode == nil || settings.allowedCountries.contains(currentCode!))
+                        .disabled(currentCode.map(settings.allowedCountries.contains) ?? true)
                     Button { picking = true } label: { Text("killswitch_add", bundle: .module) }
                         .popover(isPresented: $picking, arrowEdge: .bottom) {
                             CountryPicker(codes: Self.allRegions.filter { !settings.allowedCountries.contains($0) }) {
