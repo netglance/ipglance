@@ -67,7 +67,7 @@ struct MediumWidgetView: View {
     private var placeholder: some View {
         HStack {
             Text("🌐").font(.system(size: 36))
-            Text("Загрузка…").font(.system(size: 13)).foregroundStyle(.secondary)
+            Text("widget_loading").font(.system(size: 13)).foregroundStyle(.secondary)
         }
     }
 

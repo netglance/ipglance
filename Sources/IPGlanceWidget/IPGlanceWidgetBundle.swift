@@ -18,7 +18,7 @@ struct IPGlanceWidget: Widget {
                 .containerBackground(.background, for: .widget)
         }
         .configurationDisplayName("IPGlance")
-        .description("Показывает ваш текущий публичный IP-адрес.")
+        .description("widget_description")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }

@@ -35,11 +35,11 @@ struct LargeWidgetView: View {
 
                     // Detail rows
                     VStack(spacing: 8) {
-                        detailRow(label: "Провайдер", value: info.isp.isEmpty ? "—" : info.isp)
+                        detailRow(label: "widget_provider", value: info.isp.isEmpty ? "—" : info.isp)
                         detailRow(label: "ASN", value: info.asn.isEmpty ? "—" : info.asn, mono: true)
-                        detailRow(label: "Город", value: info.city.isEmpty ? "—" : info.city)
-                        detailRow(label: "Регион", value: info.region.isEmpty ? "—" : info.region)
-                        detailRow(label: "Таймзона", value: info.timezone.isEmpty ? "—" : info.timezone)
+                        detailRow(label: "widget_city", value: info.city.isEmpty ? "—" : info.city)
+                        detailRow(label: "widget_region", value: info.region.isEmpty ? "—" : info.region)
+                        detailRow(label: "widget_timezone", value: info.timezone.isEmpty ? "—" : info.timezone)
                     }
 
                     Spacer()
@@ -59,13 +59,13 @@ struct LargeWidgetView: View {
             } else {
                 VStack(spacing: 8) {
                     Text("🌐").font(.system(size: 44))
-                    Text("Нет данных").font(.system(size: 14)).foregroundStyle(.secondary)
+                    Text("widget_no_data").font(.system(size: 14)).foregroundStyle(.secondary)
                 }
             }
         }
     }
 
-    private func detailRow(label: String, value: String, mono: Bool = false) -> some View {
+    private func detailRow(label: LocalizedStringKey, value: String, mono: Bool = false) -> some View {
         HStack {
             Text(label)
                 .font(.system(size: 12))

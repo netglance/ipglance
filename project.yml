@@ -5,6 +5,7 @@ options:
     macOS: "14.0"
   xcodeVersion: "16.0"
   generateEmptyDirectories: true
+  developmentLanguage: en
 
 packages:
   IPGlanceCore:
@@ -26,11 +27,7 @@ targets:
     type: application
     platform: macOS
     sources:
-      - path: Sources/IPGlanceApp
-        excludes:
-          - Resources
-      - path: Sources/IPGlanceApp/Resources
-        type: folder
+      - Sources/IPGlanceApp
       - path: SupportingFiles/AppIcon.icns
         buildPhase: resources
     dependencies:
@@ -46,19 +43,6 @@ targets:
         INFOPLIST_FILE: SupportingFiles/IPGlanceApp-Info.plist
         CODE_SIGN_ENTITLEMENTS: SupportingFiles/IPGlanceApp.entitlements
         LD_RUNPATH_SEARCH_PATHS: "@executable_path/../Frameworks"
-    preBuildScripts:
-      - name: Compile xcstrings
-        script: |
-          BUNDLE="${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}"
-          # xcstrings may be directly in bundle or nested in Resources/ subfolder
-          if [ -f "${BUNDLE}/Localizable.xcstrings" ]; then
-            XCSTRINGS="${BUNDLE}/Localizable.xcstrings"
-          elif [ -f "${BUNDLE}/Resources/Localizable.xcstrings" ]; then
-            XCSTRINGS="${BUNDLE}/Resources/Localizable.xcstrings"
-          fi
-          if [ -n "$XCSTRINGS" ]; then
-            xcrun xcstringstool compile "$XCSTRINGS" --output-directory "$BUNDLE"
-          fi
 
   IPGlanceWidget:
     type: app-extension
