@@ -2,9 +2,7 @@
 
 A macOS menu bar utility that shows your current public IP, country, ASN, and geolocation at a glance — with a matching widget.
 
-![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue) ![Swift 6](https://img.shields.io/badge/Swift-6-orange) ![License: MIT](https://img.shields.io/badge/License-MIT-green)
-
-<!-- TODO: add screenshot here -->
+![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue) ![Swift 6](https://img.shields.io/badge/Swift-6-orange) ![License: MIT](https://img.shields.io/badge/License-MIT-green) [![CI](https://github.com/netglance/ipglance/actions/workflows/ci.yml/badge.svg)](https://github.com/netglance/ipglance/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/netglance/ipglance)](https://github.com/netglance/ipglance/releases/latest)
 
 ## Features
 
@@ -14,6 +12,7 @@ A macOS menu bar utility that shows your current public IP, country, ASN, and ge
 - Auto-refreshes on network changes (sleep, Wi-Fi switch, VPN connect)
 - Multi-provider fallback: tries three geolocation services in order so a single outage doesn't blank the menu bar
 - Optional country kill switch: blocks outgoing traffic via pf when your IP leaves the countries you allow (asks for the admin password once)
+- Automatic updates via Sparkle with signed release feeds (can be turned off)
 - Native tabbed Settings (General, Kill switch, About) that apply instantly
 - Localized: English, Russian, Polish, Ukrainian
 - Light and dark theme support
@@ -25,7 +24,9 @@ A macOS menu bar utility that shows your current public IP, country, ASN, and ge
 
 Prebuilt `.dmg` files are published on the [Releases page](https://github.com/netglance/ipglance/releases).
 
-Builds are not yet code-signed with a Developer ID, so on first launch you may need to right-click the app and choose **Open** to bypass Gatekeeper, or allow it in **System Settings → Privacy & Security**.
+Each release ships a `SHA256SUMS` file; to verify, put it next to the `.dmg` and run `shasum -a 256 -c SHA256SUMS`.
+
+Builds are signed with an ad-hoc identity, not a Developer ID, so on first launch you may need to right-click the app and choose **Open** to bypass Gatekeeper, or allow it in **System Settings → Privacy & Security**.
 
 ### From source
 
@@ -39,6 +40,8 @@ make run      # builds and launches
 ```
 
 ## Usage
+
+`make xcode` generates the Xcode project and opens it; run it once before `make build`.
 
 ```bash
 make build    # release build via xcodebuild
@@ -94,11 +97,7 @@ This app would not exist without the free public APIs from **[ipapi.co](https://
 
 ## Contributing
 
-Contributions are welcome. Before opening a PR:
-
-1. `make test` passes.
-2. `make build` succeeds (Release configuration).
-3. New user-visible strings are added to `Sources/IPGlanceApp/Resources/Localizable.xcstrings` with at least an English value.
+Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) for setup and the PR checklist.
 
 Bug reports and feature requests go in [Issues](https://github.com/netglance/ipglance/issues).
 
